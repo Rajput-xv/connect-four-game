@@ -361,16 +361,17 @@ function App() {
     setGamesLoading(true);
     setShowSpectatorList(true);
     socketService.emit('get-active-games');
-    
-    // Auto-refresh every 5 seconds
-    const interval = setInterval(() => {
-      if (showSpectatorList && !spectatorMode) {
-        socketService.emit('get-active-games');
-      }
-    }, 5000);
-
-    return () => clearInterval(interval);
   };
+
+  // Auto-refresh active games list when spectator list is shown
+  useEffect(() => {
+    if (showSpectatorList && !spectatorMode) {
+      const interval = setInterval(() => {
+        socketService.emit('get-active-games');
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [showSpectatorList, spectatorMode]);
 
   const handleSelectSpectatorGame = (gameId) => {
     setSpectatorGameId(gameId);
