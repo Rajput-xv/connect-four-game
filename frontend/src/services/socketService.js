@@ -21,7 +21,7 @@ class SocketService {
 
     this.connecting = true;
 
-    this.socket = io('http://localhost:5000', {
+    this.socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000', {
       transports: ['websocket'],
       autoConnect: true,
       reconnection: true,
