@@ -78,13 +78,13 @@ function App() {
       handlersSetup.current = true;
 
       socketService.on('waiting-for-opponent', () => {
-        console.log('Waiting for opponent...');
+        // console.log('Waiting for opponent...');
         setGameStage('waiting');
         setError('');
       });
 
       socketService.on('match-found', (data) => {
-        console.log('Match found:', data);
+        // console.log('Match found:', data);
         setGameState(prev => ({
           ...prev,
           gameId: data.gameId,
@@ -101,7 +101,7 @@ function App() {
       });
 
       socketService.on('move-made', (data) => {
-        console.log('Move made:', data);
+        // console.log('Move made:', data);
         setGameState(prev => ({
           ...prev,
           board: data.board,
@@ -111,7 +111,7 @@ function App() {
       });
 
       socketService.on('game-over', (data) => {
-        console.log('Game over:', data);
+        // console.log('Game over:', data);
         setGameState(prev => ({
           ...prev,
           board: data.board,
@@ -123,7 +123,7 @@ function App() {
       });
 
       socketService.on('opponent-disconnected', (data) => {
-        console.log('Opponent disconnected:', data);
+        // console.log('Opponent disconnected:', data);
         setError(data.message);
         setGameState(prev => ({
           ...prev,
@@ -138,18 +138,18 @@ function App() {
       });
 
       socketService.on('rematch-requested', (data) => {
-        console.log('Rematch requested from:', data.from);
+        // console.log('Rematch requested from:', data.from);
         setRematchReceived(true);
         setRematchFrom(data.from);
       });
 
       socketService.on('rematch-request-sent', () => {
-        console.log('Rematch request sent');
+        // console.log('Rematch request sent');
         setRematchRequested(true);
       });
 
       socketService.on('rematch-accepted', (data) => {
-        console.log('Rematch accepted:', data);
+        // console.log('Rematch accepted:', data);
         // Reset all states
         setRematchRequested(false);
         setRematchReceived(false);
@@ -173,7 +173,7 @@ function App() {
       });
 
       socketService.on('rematch-declined', () => {
-        console.log('Rematch declined');
+        // console.log('Rematch declined');
         setRematchRequested(false);
         setRematchReceived(false);
         setError('Opponent declined rematch');
@@ -183,7 +183,7 @@ function App() {
       });
 
       socketService.on('rematch-timeout', () => {
-        console.log('Rematch timeout');
+        // console.log('Rematch timeout');
         setRematchRequested(false);
         setRematchReceived(false);
         setError('Rematch request timed out');
@@ -225,7 +225,7 @@ function App() {
       return;
     }
 
-    console.log('Making move:', { gameId: gameState.gameId, column });
+    // console.log('Making move:', { gameId: gameState.gameId, column });
     socketService.emit('make-move', {
       gameId: gameState.gameId,
       column
