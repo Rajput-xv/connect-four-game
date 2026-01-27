@@ -19,7 +19,13 @@ export default function GameBoard({ board, onColumnClick, disabled, lastMove, wi
   };
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: { xs: 'column', md: 'row' },
+        alignItems: { xs: 'stretch', md: 'flex-start' },
+      }}
+    >
       <Paper
         elevation={3}
         sx={{
@@ -63,16 +69,20 @@ export default function GameBoard({ board, onColumnClick, disabled, lastMove, wi
           ))}
         </Box>
       </Paper>
-      <Box sx={{
-        marginLeft: { xs: 2, sm: 4 },
-        minWidth: 220,
-        maxWidth: 260,
-        p: 2,
-        border: '1px solid #ccc',
-        borderRadius: 2,
-        bgcolor: '#f9f9f9',
-        fontSize: 16
-      }}>
+      <Box
+        sx={{
+          marginLeft: { xs: 0, md: 4 },
+          marginTop: { xs: 2, md: 0 },
+          minWidth: 220,
+          maxWidth: 260,
+          p: 2,
+          border: '1px solid #ccc',
+          borderRadius: 2,
+          bgcolor: '#f9f9f9',
+          fontSize: 16,
+          alignSelf: { xs: 'center', md: 'flex-start' },
+        }}
+      >
         <b>How to Play</b>
         <ol style={{ margin: 0, paddingLeft: 20 }}>
           <li>Players take turns dropping discs.</li>

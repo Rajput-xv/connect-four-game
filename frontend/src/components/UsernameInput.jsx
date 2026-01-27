@@ -72,7 +72,7 @@ export default function UsernameInput({ onSubmit }) {
               Warning: You will have <b>10 seconds</b> to match with your partner!
             </Typography>
             <Typography align="center" color="text.secondary" sx={{ mt: 1, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-              If n  o opponent is found within <b>10 seconds</b>, you'll be matched with our smart bot.<br />
+              If no opponent is found within <b>10 seconds</b>, you'll be matched with our smart bot.<br />
               Invite a friend to play for the best experience, or challenge the bot to test your skills!
             </Typography>
         </form>
