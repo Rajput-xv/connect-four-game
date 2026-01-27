@@ -12,15 +12,16 @@ import {
   CircularProgress
 } from '@mui/material';
 
-export default function Leaderboard() {
+export default function Leaderboard({ refreshTrigger }) {
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchLeaderboard();
-  }, []);
+  }, [refreshTrigger]);
 
   const fetchLeaderboard = async () => {
+    setLoading(true);
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
       const response = await fetch(`${backendUrl}/api/leaderboard`);

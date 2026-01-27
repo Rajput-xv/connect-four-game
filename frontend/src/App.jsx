@@ -26,6 +26,7 @@ function App() {
   const [rematchRequested, setRematchRequested] = useState(false);
   const [rematchReceived, setRematchReceived] = useState(false);
   const [rematchFrom, setRematchFrom] = useState('');
+  const [leaderboardRefresh, setLeaderboardRefresh] = useState(0); 
   
   // Use ref to track if socket handlers are set up
   const handlersSetup = useRef(false);
@@ -80,6 +81,7 @@ function App() {
           winner: data.winner
         }));
         setGameStage('finished');
+        setLeaderboardRefresh(prev => prev + 1);
       });
 
       socketService.on('opponent-disconnected', (data) => {
@@ -239,7 +241,7 @@ function App() {
       <Box>
         <UsernameInput onSubmit={handleUsernameSubmit} />
         <Container maxWidth="md">
-          <Leaderboard />
+          <Leaderboard refreshTrigger={leaderboardRefresh} />
         </Container>
       </Box>
     );
@@ -341,7 +343,7 @@ function App() {
             </Box>
           )}
 
-          <Leaderboard />
+          <Leaderboard refreshTrigger={leaderboardRefresh} />
         </Box>
       )}
     </Container>
