@@ -10,12 +10,12 @@ class SocketService {
   connect() {
     // Prevent multiple connections
     if (this.socket && this.socket.connected) {
-      console.log('Already connected');
+      // console.log('Already connected');
       return;
     }
 
     if (this.connecting) {
-      console.log('Connection in progress');
+      // console.log('Connection in progress');
       return;
     }
 
@@ -30,13 +30,13 @@ class SocketService {
     });
 
     this.socket.on('connect', () => {
-      console.log('Connected to server');
+      // console.log('Connected to server');
       this.connected = true;
       this.connecting = false;
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('Disconnected from server:', reason);
+      // console.log('Disconnected from server:', reason);
       this.connected = false;
       this.connecting = false;
     });
