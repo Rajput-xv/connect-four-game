@@ -37,7 +37,8 @@ class GameService {
       currentTurn: PLAYER_ONE,
       status: 'active',
       startedAt: new Date(),
-      moveHistory: []
+      moveHistory: [],
+      spectators: [] 
     };
 
     // Save to database
@@ -52,6 +53,40 @@ class GameService {
     }
 
     return gameData;
+  }
+
+  addSpectator(gameId, socketId, username) {
+    const game = this.activeGames.get(gameId);
+    if (game && game.status === 'active') {
+      game.spectators = game.spectators || [];
+      game.spectators.push({ socketId, username });
+      return game;
+    }
+    return null;
+  }
+
+  removeSpectator(gameId, socketId) {
+    const game = this.activeGames.get(gameId);
+    if (game && game.spectators) {
+      game.spectators = game.spectators.filter(s => s.socketId !== socketId);
+    }
+  }
+
+  getAllActiveGames() {
+    const games = [];
+    this.activeGames.forEach((game, gameId) => {
+      if (game.status === 'active' && !game.player2.isBot) {
+        games.push({
+          gameId,
+          player1: game.player1.username,
+          player2: game.player2.username,
+          currentTurn: game.currentTurn,
+          moveCount: game.moveHistory.length,
+          spectatorCount: (game.spectators || []).length
+        });
+      }
+    });
+    return games;
   }
 
   async makeMove(gameId, column, player) {

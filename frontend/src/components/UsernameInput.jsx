@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Box, TextField, Button, Paper, Typography } from '@mui/material';
+import { Box, TextField, Button, Paper, Typography, Divider } from '@mui/material';
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
-export default function UsernameInput({ onSubmit }) {
+export default function UsernameInput({ onSubmit, onSpectate }) {
   const [username, setUsername] = useState('');
 
   const handleSubmit = (e) => {
@@ -76,6 +77,18 @@ export default function UsernameInput({ onSubmit }) {
               Invite a friend to play for the best experience, or challenge the bot to test your skills!
             </Typography>
         </form>
+
+        <Divider sx={{ my: 3 }}>OR</Divider>
+
+        <Button
+          fullWidth
+          variant="outlined"
+          size="large"
+          startIcon={<VisibilityIcon />}
+          onClick={onSpectate}
+        >
+          Spectate Live Games
+        </Button>
       </Paper>
     </Box>
   );

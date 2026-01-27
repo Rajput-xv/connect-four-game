@@ -94,6 +94,28 @@ function setupSocketHandlers(io) {
         });
       }
 
+      io.to(`game-${gameId}`).emit('spectate-move-made', {
+        board: result.board,
+        currentTurn: result.currentTurn,
+        lastMove: result.lastMove,
+        player: playerNumber
+      });
+
+      if (result.status === 'completed') {
+        const gameOverData = {
+          winner: result.winner,
+          board: result.board
+        };
+
+        io.to(game.player1.socketId).emit('game-over', gameOverData);
+        if (!game.player2.isBot) {
+          io.to(game.player2.socketId).emit('game-over', gameOverData);
+        }
+
+        // ← ADD THIS: Notify spectators game ended
+        io.to(`game-${gameId}`).emit('spectate-game-over', gameOverData);
+      }
+
       if (result.status === 'completed') {
         const gameOverData = {
           winner: result.winner,
@@ -243,6 +265,80 @@ function setupSocketHandlers(io) {
       // Notify opponent
       io.to(opponentSocketId).emit('rematch-declined');
       socket.emit('rematch-declined');
+    });
+
+    socket.on('get-active-games', () => {
+      const games = GameService.getAllActiveGames();
+      socket.emit('active-games-list', { games });
+    });
+
+    socket.on('join-spectate', ({ gameId, username }) => {
+      const game = GameService.addSpectator(gameId, socket.id, username);
+      
+      if (!game) {
+        socket.emit('error', { message: 'Game not found or ended' });
+        return;
+      }
+
+      // Join the game room
+      socket.join(`game-${gameId}`);
+
+      // Send current game state to spectator
+      socket.emit('spectate-started', {
+        gameId,
+        board: game.board,
+        currentTurn: game.currentTurn,
+        player1: game.player1.username,
+        player2: game.player2.username,
+        player1Color: game.player1.color,
+        player2Color: game.player2.color,
+        moveHistory: game.moveHistory,
+        spectatorCount: game.spectators.length
+      });
+
+      // Notify all spectators about new viewer
+      io.to(`game-${gameId}`).emit('spectator-joined', {
+        spectatorCount: game.spectators.length,
+        username
+      });
+    });
+
+    socket.on('leave-spectate', ({ gameId }) => {
+      GameService.removeSpectator(gameId, socket.id);
+      socket.leave(`game-${gameId}`);
+      
+      const game = GameService.getGame(gameId);
+      if (game) {
+        io.to(`game-${gameId}`).emit('spectator-left', {
+          spectatorCount: (game.spectators || []).length
+        });
+      }
+    });
+
+    socket.on('spectator-chat-message', ({ gameId, username, message }) => {
+      // Validate message
+      if (!message || message.trim().length === 0) return;
+      if (message.length > 200) return; // Limit message length
+
+      const game = GameService.getGame(gameId);
+      if (!game) return;
+
+      // Check if user is actually spectating this game
+      const isSpectator = game.spectators?.some(s => s.socketId === socket.id);
+      if (!isSpectator) return;
+
+      // Broadcast message to all spectators (but not players)
+      const chatMessage = {
+        username,
+        message: message.trim(),
+        timestamp: new Date().toISOString(),
+        messageId: `${socket.id}-${Date.now()}`
+      };
+
+      // Send to all spectators in this game room
+      io.to(`game-${gameId}`).emit('spectator-chat-received', chatMessage);
+      
+      console.log(`Chat in ${gameId} from ${username}: ${message}`);
     });
 
     socket.on('disconnect', () => {
