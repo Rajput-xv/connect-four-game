@@ -6,6 +6,44 @@ import GameStatus from './components/GameStatus';
 import Leaderboard from './components/Leaderboard';
 import socketService from './services/socketService';
 
+// Helper to get winning cells
+function getWinningCells(board, lastMove, winner) {
+  if (!lastMove || !winner || winner === 'draw') return [];
+  const directions = [
+    { dr: 0, dc: 1 },   // horizontal
+    { dr: 1, dc: 0 },   // vertical
+    { dr: 1, dc: 1 },   // diagonal down-right
+    { dr: 1, dc: -1 },  // diagonal down-left
+  ];
+  const ROWS = board.length;
+  const COLS = board[0].length;
+  const player = board[lastMove.row][lastMove.column];
+  for (const { dr, dc } of directions) {
+    let cells = [[lastMove.row, lastMove.column]];
+    // Forward
+    let r = lastMove.row + dr, c = lastMove.column + dc;
+    while (
+      r >= 0 && r < ROWS && c >= 0 && c < COLS && board[r][c] === player
+    ) {
+      cells.push([r, c]);
+      r += dr;
+      c += dc;
+    }
+    // Backward
+    r = lastMove.row - dr;
+    c = lastMove.column - dc;
+    while (
+      r >= 0 && r < ROWS && c >= 0 && c < COLS && board[r][c] === player
+    ) {
+      cells.push([r, c]);
+      r -= dr;
+      c -= dc;
+    }
+    if (cells.length >= 4) return cells;
+  }
+  return [];
+}
+
 function App() {
   const [gameStage, setGameStage] = useState('username'); // username, waiting, playing, finished
   const [username, setUsername] = useState('');
@@ -287,6 +325,7 @@ function App() {
               onColumnClick={handleColumnClick}
               disabled={gameState.currentTurn !== playerNumber || gameState.status !== 'active'}
               lastMove={gameState.lastMove}
+              winningCells={getWinningCells(gameState.board, gameState.lastMove, gameState.winner)}
             />
           </Box>
 
