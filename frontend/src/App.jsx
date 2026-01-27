@@ -215,13 +215,13 @@ function App() {
       });
 
       socketService.on('active-games-list', (data) => {
-        console.log('Active games:', data.games);
+        // console.log('Active games:', data.games);
         setActiveGames(data.games);
         setGamesLoading(false);
       });
 
       socketService.on('spectate-started', (data) => {
-        console.log('Spectate started:', data);
+        // console.log('Spectate started:', data);
         setSpectatorGameState({
           board: data.board,
           currentTurn: data.currentTurn,
@@ -241,7 +241,7 @@ function App() {
       });
 
       socketService.on('spectate-move-made', (data) => {
-        console.log('Spectate move:', data);
+        // console.log('Spectate move:', data);
         setSpectatorGameState(prev => ({
           ...prev,
           board: data.board,
@@ -251,7 +251,7 @@ function App() {
       });
 
       socketService.on('spectate-game-over', (data) => {
-        console.log('Spectate game over:', data);
+        // console.log('Spectate game over:', data);
         setSpectatorGameState(prev => ({
           ...prev,
           board: data.board,
@@ -261,17 +261,17 @@ function App() {
       });
 
       socketService.on('spectator-joined', (data) => {
-        console.log('Spectator joined:', data);
+        // console.log('Spectator joined:', data);
         setSpectatorCount(data.spectatorCount);
       });
 
       socketService.on('spectator-left', (data) => {
-        console.log('Spectator left:', data);
+        // console.log('Spectator left:', data);
         setSpectatorCount(data.spectatorCount);
       });
 
       socketService.on('spectator-chat-received', (message) => {
-        console.log('Chat message received:', message);
+        // console.log('Chat message received:', message);
         setChatMessages(prev => [...prev, message]);
       });
     }

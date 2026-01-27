@@ -68,25 +68,20 @@ export default function SpectatorList({ onBack, onSelectGame, games, loading }) 
                 elevation={1}
                 sx={{ mb: 2, p: 2, '&:hover': { bgcolor: '#f9f9f9' } }}
               >
-                <ListItem
-                  sx={{ p: 0 }}
-                  secondaryAction={
-                    <Button
-                      variant="contained"
-                      startIcon={<VisibilityIcon />}
-                      onClick={() => onSelectGame(game.gameId)}
-                    >
-                      Watch
-                    </Button>
-                  }
-                >
-                  <ListItemText
-                    primary={
+                <ListItem sx={{ p: 0 }}>
+                  <Box
+                    sx={{
+                      width: '100%',
+                      display: 'flex',
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      alignItems: { xs: 'stretch', sm: 'center' },
+                      gap: 2
+                    }}
+                  >
+                    <Box sx={{ flex: 1 }}>
                       <Typography variant="h6">
                         {game.player1} vs {game.player2}
                       </Typography>
-                    }
-                    secondary={
                       <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                         <Chip
                           label={`Move ${game.moveCount}`}
@@ -100,8 +95,25 @@ export default function SpectatorList({ onBack, onSelectGame, games, loading }) 
                           icon={<VisibilityIcon />}
                         />
                       </Box>
-                    }
-                  />
+                    </Box>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: { xs: 'flex-end', sm: 'flex-end' },
+                        mt: { xs: 2, sm: 0 }
+                      }}
+                    >
+                      <Button
+                        variant="contained"
+                        startIcon={<VisibilityIcon />}
+                        onClick={() => onSelectGame(game.gameId)}
+                        fullWidth={true}
+                        sx={{ minWidth: 120 }}
+                      >
+                        Watch
+                      </Button>
+                    </Box>
+                  </Box>
                 </ListItem>
               </Paper>
             ))}
