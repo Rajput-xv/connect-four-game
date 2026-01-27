@@ -18,14 +18,33 @@ export default function UsernameInput({ onSubmit }) {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
-        bgcolor: '#f5f5f5'
+        bgcolor: '#f5f5f5',
+        px: 1
       }}
     >
-      <Paper elevation={3} sx={{ p: 4, maxWidth: 400, width: '100%' }}>
-        <Typography variant="h4" gutterBottom align="center">
+      <Paper
+        elevation={3}
+        sx={{
+          p: { xs: 2, sm: 4 },
+          maxWidth: { xs: '98vw', sm: 400 },
+          width: '100%',
+        }}
+      >
+        <Typography
+          variant="h4"
+          gutterBottom
+          align="center"
+          sx={{ fontSize: { xs: '1.3rem', sm: '2.125rem' } }}
+        >
           4 in a Row
         </Typography>
-        <Typography variant="body1" gutterBottom align="center" color="text.secondary">
+        <Typography
+          variant="body1"
+          gutterBottom
+          align="center"
+          color="text.secondary"
+          sx={{ fontSize: { xs: '0.95rem', sm: '1rem' } }}
+        >
           Enter your username to start playing
         </Typography>
         <form onSubmit={handleSubmit}>

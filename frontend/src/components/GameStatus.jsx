@@ -27,8 +27,17 @@ export default function GameStatus({
   };
 
   return (
-    <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+    <Paper elevation={2} sx={{ p: { xs: 1, sm: 2 }, mb: 2 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 2,
+          gap: { xs: 1, sm: 0 }
+        }}
+      >
         <Box>
           <Typography variant="h6">{username}</Typography>
           <Chip 
@@ -40,7 +49,13 @@ export default function GameStatus({
             }} 
           />
         </Box>
-        <Typography variant="h6" color="text.secondary">VS</Typography>
+        <Typography
+          variant="h6"
+          color="text.secondary"
+          sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' }, my: { xs: 1, sm: 0 } }}
+        >
+          VS
+        </Typography>
         <Box sx={{ textAlign: 'right' }}>
           <Typography variant="h6">{opponent}</Typography>
           <Chip 
@@ -53,11 +68,11 @@ export default function GameStatus({
           />
         </Box>
       </Box>
-      <Typography 
-        variant="h5" 
-        align="center" 
+      <Typography
+        variant="h5"
+        align="center"
         color={isYourTurn ? 'primary' : 'text.secondary'}
-        sx={{ fontWeight: 'bold' }}
+        sx={{ fontWeight: 'bold', fontSize: { xs: '1.2rem', sm: '1.5rem' } }}
       >
         {getStatusMessage()}
       </Typography>

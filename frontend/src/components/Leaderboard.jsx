@@ -43,19 +43,24 @@ export default function Leaderboard({ refreshTrigger }) {
   }
 
   return (
-    <Paper elevation={3} sx={{ p: 2, mt: 3 }}>
-      <Typography variant="h5" gutterBottom align="center">
+    <Paper elevation={3} sx={{ p: { xs: 1, sm: 2 }, mt: 3 }}>
+      <Typography
+        variant="h5"
+        gutterBottom
+        align="center"
+        sx={{ fontSize: { xs: '1.1rem', sm: '1.5rem' } }}
+      >
         Leaderboard
       </Typography>
-      <TableContainer>
-        <Table size="small">
+      <TableContainer sx={{ maxWidth: '100vw', overflowX: 'auto' }}>
+        <Table size="small" sx={{ minWidth: 400 }}>
           <TableHead>
             <TableRow>
               <TableCell><strong>Rank</strong></TableCell>
               <TableCell><strong>Player</strong></TableCell>
               <TableCell align="center"><strong>Wins</strong></TableCell>
               <TableCell align="center"><strong>Losses</strong></TableCell>
-              <TableCell align="center"><strong>Draws</strong></TableCell>
+              {/* <TableCell align="center"><strong>Draws</strong></TableCell> */}
               <TableCell align="center"><strong>Total</strong></TableCell>
             </TableRow>
           </TableHead>
@@ -73,7 +78,7 @@ export default function Leaderboard({ refreshTrigger }) {
                   <TableCell>{player.username}</TableCell>
                   <TableCell align="center">{player.gamesWon}</TableCell>
                   <TableCell align="center">{player.gamesLost}</TableCell>
-                  <TableCell align="center">{player.gamesDrawn}</TableCell>
+                  {/* <TableCell align="center">{player.gamesDrawn}</TableCell> */}
                   <TableCell align="center">{player.totalGames}</TableCell>
                 </TableRow>
               ))
