@@ -14,10 +14,12 @@ class GameService {
     const gameData = {
       gameId,
       player1: {
+        socketId: player1.socketId,
         username: player1.username,
         color: player1.color
       },
       player2: {
+        socketId: player2.socketId,
         username: player2.username,
         color: player2.color,
         isBot: player2.isBot || false

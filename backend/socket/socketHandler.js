@@ -46,7 +46,7 @@ function setupSocketHandlers(io) {
           const game = await GameService.createGame(
             gameId,
             { socketId: socket.id, username, color: 'red' },
-            { username: 'Bot', color: 'yellow', isBot: true }
+            { socketId: 'bot', username: 'Bot', color: 'yellow', isBot: true }
           );
 
           socket.emit('match-found', {
