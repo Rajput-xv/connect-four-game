@@ -8,6 +8,15 @@ class GameService {
     this.activeGames = new Map();
     this.playerGameMap = new Map();
     this.disconnectedPlayers = new Map();
+    this.rematchGames = new Map();
+  }
+
+  setRematchGame(oldGameId, newGameId) {
+    this.rematchGames.set(oldGameId, newGameId);
+  }
+
+  getRematchGame(oldGameId) {
+    return this.rematchGames.get(oldGameId);
   }
 
   async createGame(gameId, player1, player2) {

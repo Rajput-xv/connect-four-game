@@ -144,6 +144,107 @@ function setupSocketHandlers(io) {
       }
     });
 
+    socket.on('request-rematch', async ({ gameId }) => {
+      const game = GameService.getGame(gameId);
+      
+      if (!game) {
+        socket.emit('error', { message: 'Game not found' });
+        return;
+      }
+
+      // Don't allow rematch with bot
+      if (game.player2.isBot) {
+        socket.emit('error', { message: 'Cannot rematch with bot' });
+        return;
+      }
+
+      const requestingPlayer = game.player1.socketId === socket.id ? 1 : 2;
+      const opponentSocketId = requestingPlayer === 1 ? 
+        game.player2.socketId : game.player1.socketId;
+
+      // Send rematch request to opponent
+      io.to(opponentSocketId).emit('rematch-requested', {
+        gameId,
+        from: requestingPlayer === 1 ? game.player1.username : game.player2.username
+      });
+
+      // Notify requester
+      socket.emit('rematch-request-sent');
+
+      // Set 30 second timeout
+      setTimeout(() => {
+        // Check if rematch was accepted
+        const newGame = GameService.getRematchGame(gameId);
+        if (!newGame) {
+          socket.emit('rematch-timeout');
+          io.to(opponentSocketId).emit('rematch-timeout');
+        }
+      }, 30000);
+    });
+
+    socket.on('accept-rematch', async ({ gameId }) => {
+      const oldGame = GameService.getGame(gameId);
+      
+      if (!oldGame) {
+        socket.emit('error', { message: 'Original game not found' });
+        return;
+      }
+
+      const acceptingPlayer = oldGame.player1.socketId === socket.id ? 1 : 2;
+      const opponentSocketId = acceptingPlayer === 1 ? 
+        oldGame.player2.socketId : oldGame.player1.socketId;
+
+      // Create new game with same players (swap colors)
+      const newGameId = uuidv4();
+      const newGame = await GameService.createGame(
+        newGameId,
+        {
+          socketId: oldGame.player1.socketId,
+          username: oldGame.player1.username,
+          color: oldGame.player2.color // Swap colors
+        },
+        {
+          socketId: oldGame.player2.socketId,
+          username: oldGame.player2.username,
+          color: oldGame.player1.color // Swap colors
+        }
+      );
+
+      // Mark as rematch
+      GameService.setRematchGame(gameId, newGameId);
+
+      // Notify both players
+      io.to(oldGame.player1.socketId).emit('rematch-accepted', {
+        gameId: newGame.gameId,
+        opponent: newGame.player2.username,
+        playerNumber: 1,
+        yourColor: newGame.player1.color,
+        opponentColor: newGame.player2.color
+      });
+
+      io.to(oldGame.player2.socketId).emit('rematch-accepted', {
+        gameId: newGame.gameId,
+        opponent: newGame.player1.username,
+        playerNumber: 2,
+        yourColor: newGame.player2.color,
+        opponentColor: newGame.player1.color
+      });
+    });
+
+    socket.on('decline-rematch', async ({ gameId }) => {
+      const game = GameService.getGame(gameId);
+      
+      if (!game) return;
+
+      const decliningPlayer = game.player1.socketId === socket.id ? 1 : 2;
+      const opponentSocketId = decliningPlayer === 1 ? 
+        game.player2.socketId : game.player1.socketId;
+
+      // Notify opponent
+      io.to(opponentSocketId).emit('rematch-declined');
+      socket.emit('rematch-declined');
+    });
+
     socket.on('disconnect', () => {
       console.log('Client disconnected:', socket.id);
       

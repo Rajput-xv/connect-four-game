@@ -23,6 +23,9 @@ function App() {
   const [opponentColor, setOpponentColor] = useState('');
   const [error, setError] = useState('');
   const [isBot, setIsBot] = useState(false);
+  const [rematchRequested, setRematchRequested] = useState(false);
+  const [rematchReceived, setRematchReceived] = useState(false);
+  const [rematchFrom, setRematchFrom] = useState('');
   
   // Use ref to track if socket handlers are set up
   const handlersSetup = useRef(false);
@@ -93,6 +96,61 @@ function App() {
         console.error('Game error:', data);
         setError(data.message);
       });
+
+      socketService.on('rematch-requested', (data) => {
+        console.log('Rematch requested from:', data.from);
+        setRematchReceived(true);
+        setRematchFrom(data.from);
+      });
+
+      socketService.on('rematch-request-sent', () => {
+        console.log('Rematch request sent');
+        setRematchRequested(true);
+      });
+
+      socketService.on('rematch-accepted', (data) => {
+        console.log('Rematch accepted:', data);
+        // Reset all states
+        setRematchRequested(false);
+        setRematchReceived(false);
+        setRematchFrom('');
+        
+        // Start new game
+        setGameState({
+          gameId: data.gameId,
+          board: Array(6).fill(null).map(() => Array(7).fill(0)),
+          currentTurn: 1,
+          status: 'active',
+          winner: null,
+          lastMove: null
+        });
+        setOpponent(data.opponent);
+        setPlayerNumber(data.playerNumber);
+        setYourColor(data.yourColor);
+        setOpponentColor(data.opponentColor);
+        setGameStage('playing');
+        setError('');
+      });
+
+      socketService.on('rematch-declined', () => {
+        console.log('Rematch declined');
+        setRematchRequested(false);
+        setRematchReceived(false);
+        setError('Opponent declined rematch');
+        setTimeout(() => {
+          handleReturnHome();
+        }, 2000);
+      });
+
+      socketService.on('rematch-timeout', () => {
+        console.log('Rematch timeout');
+        setRematchRequested(false);
+        setRematchReceived(false);
+        setError('Rematch request timed out');
+        setTimeout(() => {
+          handleReturnHome();
+        }, 2000);
+      });
     }
 
     // Cleanup on unmount
@@ -134,7 +192,28 @@ function App() {
     });
   };
 
-  const handlePlayAgain = () => {
+  const handleRequestRematch = () => {
+    if (isBot) {
+      // If playing against bot, just start new game
+      handleReturnHome();
+      return;
+    }
+
+    socketService.emit('request-rematch', { gameId: gameState.gameId });
+  };
+
+  const handleAcceptRematch = () => {
+    socketService.emit('accept-rematch', { gameId: gameState.gameId });
+    setRematchReceived(false);
+  };
+
+  const handleDeclineRematch = () => {
+    socketService.emit('decline-rematch', { gameId: gameState.gameId });
+    setRematchReceived(false);
+    handleReturnHome();
+  };
+
+  const handleReturnHome = () => {
     setGameStage('username');
     setGameState({
       gameId: null,
@@ -150,6 +229,9 @@ function App() {
     setOpponentColor('');
     setError('');
     setIsBot(false);
+    setRematchRequested(false);
+    setRematchReceived(false);
+    setRematchFrom('');
   };
 
   if (gameStage === 'username') {
@@ -208,13 +290,54 @@ function App() {
 
           {gameStage === 'finished' && (
             <Box sx={{ textAlign: 'center' }}>
-              <Button
-                variant="contained"
-                size="large"
-                onClick={handlePlayAgain}
-              >
-                Play Again
-              </Button>
+              {rematchRequested ? (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  Waiting for opponent to accept rematch... (30s)
+                </Alert>
+              ) : rematchReceived ? (
+                <Box>
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    {rematchFrom} wants a rematch! (30s to respond)
+                  </Alert>
+                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+                    <Button
+                      variant="contained"
+                      color="success"
+                      size="large"
+                      onClick={handleAcceptRematch}
+                    >
+                      Accept Rematch
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      size="large"
+                      onClick={handleDeclineRematch}
+                    >
+                      Decline
+                    </Button>
+                  </Box>
+                </Box>
+              ) : (
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+                  {!isBot && (
+                    <Button
+                      variant="contained"
+                      size="large"
+                      onClick={handleRequestRematch}
+                    >
+                      Request Rematch
+                    </Button>
+                  )}
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    onClick={handleReturnHome}
+                  >
+                    {isBot ? 'Play Again' : 'Find New Opponent'}
+                  </Button>
+                </Box>
+              )}
             </Box>
           )}
 
