@@ -407,19 +407,7 @@ function App() {
     });
   };
 
-  if (gameStage === 'username') {
-    return (
-      <Box>
-        <UsernameInput 
-          onSubmit={handleUsernameSubmit}
-          onSpectate={handleShowSpectatorList}
-        />
-        <Container maxWidth="md">
-          <Leaderboard refreshTrigger={leaderboardRefresh} />
-        </Container>
-      </Box>
-    );
-  }
+
 
   if (showSpectatorList) {
     return (
@@ -455,7 +443,7 @@ function App() {
       <Box>
         <UsernameInput 
           onSubmit={handleUsernameSubmit}
-          onSpectate={handleShowSpectatorList}  // ← ADD THIS PROP
+          onSpectate={handleShowSpectatorList}
         />
         <Container maxWidth="md">
           <Leaderboard refreshTrigger={leaderboardRefresh} />
