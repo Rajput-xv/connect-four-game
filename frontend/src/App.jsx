@@ -5,6 +5,8 @@ import GameBoard from './components/GameBoard';
 import GameStatus from './components/GameStatus';
 import Leaderboard from './components/Leaderboard';
 import socketService from './services/socketService';
+import SpectatorList from './components/SpectatorList';
+import SpectatorView from './components/SpectatorView';
 
 // Helper to get winning cells
 function getWinningCells(board, lastMove, winner) {
@@ -65,6 +67,26 @@ function App() {
   const [rematchReceived, setRematchReceived] = useState(false);
   const [rematchFrom, setRematchFrom] = useState('');
   const [leaderboardRefresh, setLeaderboardRefresh] = useState(0); 
+  const [spectatorMode, setSpectatorMode] = useState(false);
+  const [spectatorGameId, setSpectatorGameId] = useState(null);
+  const [activeGames, setActiveGames] = useState([]);
+  const [spectatorGameState, setSpectatorGameState] = useState({
+    board: Array(6).fill(null).map(() => Array(7).fill(0)),
+    currentTurn: 1,
+    status: 'active',
+    winner: null,
+    lastMove: null
+  });
+  const [spectatorPlayers, setSpectatorPlayers] = useState({
+    player1: '',
+    player2: '',
+    player1Color: '',
+    player2Color: ''
+  });
+  const [spectatorCount, setSpectatorCount] = useState(0);
+  const [showSpectatorList, setShowSpectatorList] = useState(false);
+  const [gamesLoading, setGamesLoading] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
   
   // Use ref to track if socket handlers are set up
   const handlersSetup = useRef(false);
@@ -191,6 +213,67 @@ function App() {
           handleReturnHome();
         }, 2000);
       });
+
+      socketService.on('active-games-list', (data) => {
+        console.log('Active games:', data.games);
+        setActiveGames(data.games);
+        setGamesLoading(false);
+      });
+
+      socketService.on('spectate-started', (data) => {
+        console.log('Spectate started:', data);
+        setSpectatorGameState({
+          board: data.board,
+          currentTurn: data.currentTurn,
+          status: 'active',
+          winner: null,
+          lastMove: data.moveHistory[data.moveHistory.length - 1] || null
+        });
+        setSpectatorPlayers({
+          player1: data.player1,
+          player2: data.player2,
+          player1Color: data.player1Color,
+          player2Color: data.player2Color
+        });
+        setSpectatorCount(data.spectatorCount);
+        setSpectatorMode(true);
+        setShowSpectatorList(false);
+      });
+
+      socketService.on('spectate-move-made', (data) => {
+        console.log('Spectate move:', data);
+        setSpectatorGameState(prev => ({
+          ...prev,
+          board: data.board,
+          currentTurn: data.currentTurn,
+          lastMove: data.lastMove
+        }));
+      });
+
+      socketService.on('spectate-game-over', (data) => {
+        console.log('Spectate game over:', data);
+        setSpectatorGameState(prev => ({
+          ...prev,
+          board: data.board,
+          status: 'completed',
+          winner: data.winner
+        }));
+      });
+
+      socketService.on('spectator-joined', (data) => {
+        console.log('Spectator joined:', data);
+        setSpectatorCount(data.spectatorCount);
+      });
+
+      socketService.on('spectator-left', (data) => {
+        console.log('Spectator left:', data);
+        setSpectatorCount(data.spectatorCount);
+      });
+
+      socketService.on('spectator-chat-received', (message) => {
+        console.log('Chat message received:', message);
+        setChatMessages(prev => [...prev, message]);
+      });
     }
 
     // Cleanup on unmount
@@ -274,10 +357,106 @@ function App() {
     setRematchFrom('');
   };
 
+  const handleShowSpectatorList = () => {
+    setGamesLoading(true);
+    setShowSpectatorList(true);
+    socketService.emit('get-active-games');
+    
+    // Auto-refresh every 5 seconds
+    const interval = setInterval(() => {
+      if (showSpectatorList && !spectatorMode) {
+        socketService.emit('get-active-games');
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  };
+
+  const handleSelectSpectatorGame = (gameId) => {
+    setSpectatorGameId(gameId);
+    setChatMessages([]);
+    socketService.emit('join-spectate', {
+      gameId,
+      username: username || 'Anonymous'
+    });
+  };
+
+  const handleBackFromSpectatorList = () => {
+    setShowSpectatorList(false);
+    setActiveGames([]);
+  };
+
+  const handleBackFromSpectator = () => {
+    if (spectatorGameId) {
+      socketService.emit('leave-spectate', { gameId: spectatorGameId });
+    }
+    setSpectatorMode(false);
+    setSpectatorGameId(null);
+    setShowSpectatorList(true);
+    setChatMessages([]);
+    socketService.emit('get-active-games');
+  };
+
+  const handleSendChatMessage = (message) => {
+    if (!spectatorGameId || !username) return;
+    
+    socketService.emit('spectator-chat-message', {
+      gameId: spectatorGameId,
+      username: username || 'Anonymous',
+      message
+    });
+  };
+
   if (gameStage === 'username') {
     return (
       <Box>
-        <UsernameInput onSubmit={handleUsernameSubmit} />
+        <UsernameInput 
+          onSubmit={handleUsernameSubmit}
+          onSpectate={handleShowSpectatorList}
+        />
+        <Container maxWidth="md">
+          <Leaderboard refreshTrigger={leaderboardRefresh} />
+        </Container>
+      </Box>
+    );
+  }
+
+  if (showSpectatorList) {
+    return (
+      <SpectatorList
+        games={activeGames}
+        loading={gamesLoading}
+        onBack={handleBackFromSpectatorList}
+        onSelectGame={handleSelectSpectatorGame}
+      />
+    );
+  }
+
+  if (spectatorMode) {
+    return (
+      <SpectatorView
+        gameState={spectatorGameState}
+        player1={spectatorPlayers.player1}
+        player2={spectatorPlayers.player2}
+        player1Color={spectatorPlayers.player1Color}
+        player2Color={spectatorPlayers.player2Color}
+        spectatorCount={spectatorCount}
+        onBack={handleBackFromSpectator}
+        username={username || 'Anonymous'}
+        gameId={spectatorGameId}
+        chatMessages={chatMessages}
+        onSendChatMessage={handleSendChatMessage}
+      />
+    );
+  }
+
+  if (gameStage === 'username') {
+    return (
+      <Box>
+        <UsernameInput 
+          onSubmit={handleUsernameSubmit}
+          onSpectate={handleShowSpectatorList}  // ← ADD THIS PROP
+        />
         <Container maxWidth="md">
           <Leaderboard refreshTrigger={leaderboardRefresh} />
         </Container>
