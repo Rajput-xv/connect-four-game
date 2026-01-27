@@ -67,6 +67,14 @@ export default function UsernameInput({ onSubmit }) {
           >
             Find Match
           </Button>
+
+            <Typography align="center" color="error" sx={{ mt: 2, fontWeight: 600, fontSize: { xs: '1rem', sm: '1.05rem' } }}>
+              Warning: You will have <b>10 seconds</b> to match with your partner!
+            </Typography>
+            <Typography align="center" color="text.secondary" sx={{ mt: 1, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+              If n  o opponent is found within <b>10 seconds</b>, you'll be matched with our smart bot.<br />
+              Invite a friend to play for the best experience, or challenge the bot to test your skills!
+            </Typography>
         </form>
       </Paper>
     </Box>
