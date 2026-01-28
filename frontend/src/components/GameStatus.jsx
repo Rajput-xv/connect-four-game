@@ -1,4 +1,5 @@
 import { Paper, Typography, Box, Chip } from '@mui/material';
+import { blue } from '@mui/material/colors';
 
 export default function GameStatus({ 
   gameState, 
@@ -6,7 +7,8 @@ export default function GameStatus({
   opponent, 
   playerNumber,
   yourColor,
-  opponentColor 
+  opponentColor,
+  spectateCount = 0
 }) {
   const isYourTurn = gameState.currentTurn === playerNumber;
 
@@ -56,18 +58,26 @@ export default function GameStatus({
         >
           VS
         </Typography>
-        <Box sx={{ textAlign: 'right' }}>
-          <Typography variant="h6">{opponent}</Typography>
-          <Chip 
-            label={opponentColor} 
-            size="small" 
-            sx={{ 
-              bgcolor: opponentColor === 'red' ? '#f44336' : '#fdd835',
-              color: opponentColor === 'red' ? 'white' : 'black'
-            }} 
-          />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ textAlign: 'right' }}>
+            <Typography variant="h6">{opponent}</Typography>
+            <Chip 
+              label={opponentColor} 
+              size="small" 
+              sx={{ 
+                bgcolor: opponentColor === 'red' ? '#f44336' : '#fdd835',
+                color: opponentColor === 'red' ? 'white' : 'black'
+              }} 
+            />
+          </Box>
+          <Box sx={{ ml: 2, display: 'flex', alignItems: 'center' }}>
+            <Typography variant="body2" color="text.secondary" sx={{ bgcolor: blue[200], display: 'flex', alignItems: 'center', gap: 0.5, p: 1, borderRadius: 1 }}>
+              <span role="img" aria-label="spectators">👁️</span> {spectateCount}
+            </Typography>
+          </Box>
         </Box>
       </Box>
+      
       <Typography
         variant="h5"
         align="center"
