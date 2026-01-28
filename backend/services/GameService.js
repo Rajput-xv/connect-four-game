@@ -128,17 +128,13 @@ class GameService {
       await this.updatePlayerStats(game.winner, 'win');
       
       const loser = player === PLAYER_ONE ? game.player2.username : game.player1.username;
-      if (!game.player2.isBot) {
-        await this.updatePlayerStats(loser, 'loss');
-      }
+      await this.updatePlayerStats(loser, 'loss');
     } else if (isFull) {
       game.status = 'completed';
       game.winner = 'draw';
       game.completedAt = new Date();
       await this.updatePlayerStats(game.player1.username, 'draw');
-      if (!game.player2.isBot) {
-        await this.updatePlayerStats(game.player2.username, 'draw');
-      }
+      await this.updatePlayerStats(game.player2.username, 'draw');
     } else {
       // Switch turn
       game.currentTurn = game.currentTurn === PLAYER_ONE ? PLAYER_TWO : PLAYER_ONE;
@@ -207,9 +203,7 @@ class GameService {
     await this.updatePlayerStats(game.winner, 'win');
     const loser = game.winner === game.player1.username ? 
       game.player2.username : game.player1.username;
-    if (!game.player2.isBot) {
-      await this.updatePlayerStats(loser, 'loss');
-    }
+    await this.updatePlayerStats(loser, 'loss');
 
     this.activeGames.delete(gameId);
   }
