@@ -4,6 +4,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import GameBoard from './GameBoard';
 import SpectatorChat from './SpectatorChat';
+import Leaderboard from './Leaderboard';
 
 export default function SpectatorView({
   gameState,
@@ -103,6 +104,7 @@ export default function SpectatorView({
               messages={chatMessages}
               onSendMessage={onSendChatMessage}
             />
+            <Leaderboard />
           </Stack>
         ) : (
           <Grid container spacing={3}>
@@ -123,6 +125,9 @@ export default function SpectatorView({
                 messages={chatMessages}
                 onSendMessage={onSendChatMessage}
               />
+              <Box sx={{ mt: 3 }}>
+                <Leaderboard />
+              </Box>
             </Grid>
           </Grid>
         )}
