@@ -105,6 +105,42 @@ function App() {
   const [showSpectatorList, setShowSpectatorList] = useState(false);
   const [gamesLoading, setGamesLoading] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
+  // Timer states
+  const [waitingTimer, setWaitingTimer] = useState(10);
+  const [rematchTimer, setRematchTimer] = useState(30);
+    // Handle waiting for opponent timer
+    useEffect(() => {
+      if (gameStage === 'waiting') {
+        setWaitingTimer(10);
+        const interval = setInterval(() => {
+          setWaitingTimer((prev) => {
+            if (prev <= 1) {
+              clearInterval(interval);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+        return () => clearInterval(interval);
+      }
+    }, [gameStage]);
+
+    // Handle rematch timer (for both request and receive)
+    useEffect(() => {
+      if ((rematchRequested || rematchReceived) && gameStage === 'finished') {
+        setRematchTimer(30);
+        const interval = setInterval(() => {
+          setRematchTimer((prev) => {
+            if (prev <= 1) {
+              clearInterval(interval);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+        return () => clearInterval(interval);
+      }
+    }, [rematchRequested, rematchReceived, gameStage]);
   
   // Use ref to track if socket handlers are set up
   const handlersSetup = useRef(false);
@@ -513,7 +549,7 @@ function App() {
             Finding an opponent...
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            If no player joins in 10 seconds, you'll play against a bot
+            If no player joins in <b>{waitingTimer}s</b>, you'll play against a bot
           </Typography>
         </Box>
       )}
@@ -544,12 +580,12 @@ function App() {
             <Box sx={{ textAlign: 'center' }}>
               {rematchRequested ? (
                 <Alert severity="info" sx={{ mb: 2 }}>
-                  Waiting for opponent to accept rematch... (30s)
+                  Waiting for opponent to accept rematch... (<b>{rematchTimer}s</b>)
                 </Alert>
               ) : rematchReceived ? (
                 <Box>
                   <Alert severity="info" sx={{ mb: 2 }}>
-                    {rematchFrom} wants a rematch! (30s to respond)
+                    {rematchFrom} wants a rematch! (<b>{rematchTimer}s</b> to respond)
                   </Alert>
                   <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
                     <Button
@@ -572,22 +608,45 @@ function App() {
                 </Box>
               ) : (
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-                  {!isBot && (
-                    <Button
-                      variant="contained"
-                      size="large"
-                      onClick={handleRequestRematch}
-                    >
-                      Request Rematch
-                    </Button>
+                  {isBot ? (
+                    <>
+                      <Button
+                        variant="contained"
+                        size="large"
+                        onClick={() => {
+                          // Start a new bot game with same username
+                          socketService.emit('find-match', { username });
+                          setGameStage('waiting');
+                        }}
+                      >
+                        Play Again
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="large"
+                        onClick={handleReturnHome}
+                      >
+                        Find New Opponent
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="contained"
+                        size="large"
+                        onClick={handleRequestRematch}
+                      >
+                        Request Rematch
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="large"
+                        onClick={handleReturnHome}
+                      >
+                        Find New Opponent
+                      </Button>
+                    </>
                   )}
-                  <Button
-                    variant="outlined"
-                    size="large"
-                    onClick={handleReturnHome}
-                  >
-                    {isBot ? 'Play Again' : 'Find New Opponent'}
-                  </Button>
                 </Box>
               )}
             </Box>
