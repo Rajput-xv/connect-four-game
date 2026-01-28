@@ -471,10 +471,10 @@ function App() {
     return (
       <Box>
         <UsernameInput 
-          onSubmit={(name) => {
+          onSubmit={(name, spectate) => {
             setUsername(name);
             setPendingSpectate(false);
-            if (pendingSpectate) {
+            if (spectate) {
               handleShowSpectatorList();
             } else {
               handleUsernameSubmit(name);
