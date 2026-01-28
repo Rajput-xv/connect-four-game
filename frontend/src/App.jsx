@@ -521,6 +521,7 @@ function App() {
             playerNumber={playerNumber}
             yourColor={yourColor}
             opponentColor={opponentColor}
+            spectateCount={spectatorCount}
           />
 
           <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
