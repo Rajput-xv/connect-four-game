@@ -52,26 +52,50 @@ export default function SpectatorView({
           </Box>
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box
+                sx={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  bgcolor: player1Color === 'red' ? '#f44336' : '#fdd835',
+                  border: '2px solid',
+                  borderColor: player1Color === 'red' ? '#b71c1c' : '#fbc02d',
+                  mr: 1
+                }}
+              />
               <Typography variant="h6">{player1}</Typography>
               <Chip
                 label={player1Color}
                 size="small"
                 sx={{
                   bgcolor: player1Color === 'red' ? '#f44336' : '#fdd835',
-                  color: player1Color === 'red' ? 'white' : 'black'
+                  color: player1Color === 'red' ? 'white' : 'black',
+                  ml: 1
                 }}
               />
             </Box>
             <Typography variant="h6" color="text.secondary">VS</Typography>
-            <Box sx={{ textAlign: 'right' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'flex-end' }}>
+              <Box
+                sx={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  bgcolor: player2Color === 'red' ? '#f44336' : '#fdd835',
+                  border: '2px solid',
+                  borderColor: player2Color === 'red' ? '#b71c1c' : '#fbc02d',
+                  mr: 1
+                }}
+              />
               <Typography variant="h6">{player2}</Typography>
               <Chip
                 label={player2Color}
                 size="small"
                 sx={{
                   bgcolor: player2Color === 'red' ? '#f44336' : '#fdd835',
-                  color: player2Color === 'red' ? 'white' : 'black'
+                  color: player2Color === 'red' ? 'white' : 'black',
+                  ml: 1
                 }}
               />
             </Box>
@@ -96,6 +120,10 @@ export default function SpectatorView({
                 onColumnClick={() => {}}
                 disabled={true}
                 lastMove={gameState.lastMove}
+                playerColors={{
+                  1: player1Color === 'red' ? '#f44336' : '#fdd835',
+                  2: player2Color === 'red' ? '#f44336' : '#fdd835'
+                }}
               />
             </Box>
             <SpectatorChat
@@ -115,6 +143,10 @@ export default function SpectatorView({
                   onColumnClick={() => {}}
                   disabled={true}
                   lastMove={gameState.lastMove}
+                  playerColors={{
+                    1: player1Color === 'red' ? '#f44336' : '#fdd835',
+                    2: player2Color === 'red' ? '#f44336' : '#fdd835'
+                  }}
                 />
               </Box>
             </Grid>
