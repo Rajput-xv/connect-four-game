@@ -614,7 +614,24 @@ function App() {
                         variant="contained"
                         size="large"
                         onClick={() => {
-                          // Start a new bot game with same username
+                          // Reset board and state before starting new bot game
+                          setGameState({
+                            gameId: null,
+                            board: Array(6).fill(null).map(() => Array(7).fill(0)),
+                            currentTurn: 1,
+                            status: 'waiting',
+                            winner: null,
+                            lastMove: null
+                          });
+                          setOpponent('');
+                          setPlayerNumber(null);
+                          setYourColor('');
+                          setOpponentColor('');
+                          setError('');
+                          setIsBot(false);
+                          setRematchRequested(false);
+                          setRematchReceived(false);
+                          setRematchFrom('');
                           socketService.emit('find-match', { username });
                           setGameStage('waiting');
                         }}
