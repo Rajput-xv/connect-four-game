@@ -43,7 +43,7 @@ export default function SpectatorChat({ gameId, username, messages, onSendMessag
   };
 
   return (
-    <Paper elevation={2} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Paper elevation={2} sx={{ display: 'flex', flexDirection: 'column', maxHeight: 600, minHeight: 400 }}>
       {/* Header */}
       <Box sx={{ 
         p: 2, 
@@ -77,8 +77,8 @@ export default function SpectatorChat({ gameId, username, messages, onSendMessag
           overflow: 'auto',
           p: 2,
           bgcolor: '#f5f5f5',
-          maxHeight: 400,
-          minHeight: 300
+          minHeight: 200,
+          maxHeight: 400
         }}
       >
         {messages.length === 0 ? (
