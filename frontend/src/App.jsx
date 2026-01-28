@@ -573,6 +573,10 @@ function App() {
               disabled={gameState.currentTurn !== playerNumber || gameState.status !== 'active'}
               lastMove={gameState.lastMove}
               winningCells={getWinningCells(gameState.board, gameState.lastMove, gameState.winner)}
+              playerColors={{
+                1: playerNumber === 1 ? yourColor : opponentColor,
+                2: playerNumber === 2 ? yourColor : opponentColor
+              }}
             />
           </Box>
 
