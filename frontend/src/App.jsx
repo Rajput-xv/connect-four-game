@@ -427,6 +427,17 @@ function App() {
 
 
 
+
+  // If user wants to spectate but hasn't provided a username, prompt for it
+  const [pendingSpectate, setPendingSpectate] = useState(false);
+  const handleSpectateClick = () => {
+    if (!username) {
+      setPendingSpectate(true);
+    } else {
+      handleShowSpectatorList();
+    }
+  };
+
   if (showSpectatorList) {
     return (
       <SpectatorList
@@ -448,7 +459,7 @@ function App() {
         player2Color={spectatorPlayers.player2Color}
         spectatorCount={spectatorCount}
         onBack={handleBackFromSpectator}
-        username={username || 'Anonymous'}
+        username={username}
         gameId={spectatorGameId}
         chatMessages={chatMessages}
         onSendChatMessage={handleSendChatMessage}
@@ -456,12 +467,20 @@ function App() {
     );
   }
 
-  if (gameStage === 'username') {
+  if (gameStage === 'username' || pendingSpectate) {
     return (
       <Box>
         <UsernameInput 
-          onSubmit={handleUsernameSubmit}
-          onSpectate={handleShowSpectatorList}
+          onSubmit={(name) => {
+            setUsername(name);
+            setPendingSpectate(false);
+            if (pendingSpectate) {
+              handleShowSpectatorList();
+            } else {
+              handleUsernameSubmit(name);
+            }
+          }}
+          onSpectate={handleSpectateClick}
         />
         <Container maxWidth="md">
           <Leaderboard refreshTrigger={leaderboardRefresh} />
