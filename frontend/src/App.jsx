@@ -57,6 +57,23 @@ function App() {
     winner: null,
     lastMove: null
   });
+  // Add responsive style for mobile margin-bottom
+  const responsiveStyle = `
+  @media (max-width: 600px) {
+    .main-body {
+      margin-bottom: 1.25rem;
+    }
+  }
+  `;
+
+  useEffect(() => {
+    const styleTag = document.createElement('style');
+    styleTag.innerHTML = responsiveStyle;
+    document.head.appendChild(styleTag);
+    return () => {
+      document.head.removeChild(styleTag);
+    };
+  }, []);
   const [opponent, setOpponent] = useState('');
   const [playerNumber, setPlayerNumber] = useState(null);
   const [yourColor, setYourColor] = useState('');
@@ -454,7 +471,7 @@ function App() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4, mb: 5 }}>
       <Typography variant="h3" align="center" gutterBottom>
         4 in a Row
       </Typography>
@@ -477,7 +494,7 @@ function App() {
       )}
 
       {(gameStage === 'playing' || gameStage === 'finished') && (
-        <Box>
+        <Box sx={{ mb: 4 }} className="main-body">
           <GameStatus
             gameState={gameState}
             username={username}

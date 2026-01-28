@@ -43,7 +43,7 @@ export default function Leaderboard({ refreshTrigger }) {
   }
 
   return (
-    <Paper elevation={3} sx={{ p: { xs: 1, sm: 2 }, mt: 3 }}>
+    <Paper elevation={3} sx={{ p: { xs: 1, sm: 2 }, mt: 3, mb: 5 }}>
       <Typography
         variant="h5"
         gutterBottom
