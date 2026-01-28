@@ -1,12 +1,12 @@
 import { Box, Paper } from '@mui/material';
+import { PLAYER_COLORS } from '../utils/colors';
 
 const ROWS = 6;
 const COLS = 7;
 
 export default function GameBoard({ board, onColumnClick, disabled, lastMove, winningCells = [] }) {
   const getCellColor = (value) => {
-    if (value === 1) return '#f44336'; // Red
-    if (value === 2) return '#fdd835'; // Yellow
+    if (PLAYER_COLORS[value]) return PLAYER_COLORS[value];
     return '#ffffff'; // Empty
   };
 

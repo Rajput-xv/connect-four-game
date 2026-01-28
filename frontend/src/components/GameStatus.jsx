@@ -1,5 +1,6 @@
 import { Paper, Typography, Box, Chip } from '@mui/material';
 import { blue } from '@mui/material/colors';
+import { PLAYER_COLORS, PLAYER_LABELS } from '../utils/colors';
 
 export default function GameStatus({ 
   gameState, 
@@ -43,12 +44,12 @@ export default function GameStatus({
         <Box>
           <Typography variant="h6">{username}</Typography>
           <Chip 
-            label={yourColor} 
-            size="small" 
-            sx={{ 
-              bgcolor: yourColor === 'red' ? '#f44336' : '#fdd835',
+            label={yourColor}
+            size="small"
+            sx={{
+              bgcolor: PLAYER_COLORS[yourColor === 'red' ? 1 : 2],
               color: yourColor === 'red' ? 'white' : 'black'
-            }} 
+            }}
           />
         </Box>
         <Typography
@@ -62,12 +63,12 @@ export default function GameStatus({
           <Box sx={{ textAlign: 'right' }}>
             <Typography variant="h6">{opponent}</Typography>
             <Chip 
-              label={opponentColor} 
-              size="small" 
-              sx={{ 
-                bgcolor: opponentColor === 'red' ? '#f44336' : '#fdd835',
+              label={opponentColor}
+              size="small"
+              sx={{
+                bgcolor: PLAYER_COLORS[opponentColor === 'red' ? 1 : 2],
                 color: opponentColor === 'red' ? 'white' : 'black'
-              }} 
+              }}
             />
           </Box>
           <Box sx={{ ml: 2, display: 'flex', alignItems: 'center' }}>
