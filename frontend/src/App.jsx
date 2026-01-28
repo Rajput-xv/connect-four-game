@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Container, Box, Button, Typography, Alert } from '@mui/material';
 import UsernameInput from './components/UsernameInput';
+import TimedPopup from './components/TimedPopup';
 import GameBoard from './components/GameBoard';
 import GameStatus from './components/GameStatus';
 import Leaderboard from './components/Leaderboard';
@@ -425,18 +426,17 @@ function App() {
     });
   };
 
-
-
-
   // If user wants to spectate but hasn't provided a username, prompt for it
   const [pendingSpectate, setPendingSpectate] = useState(false);
+  const [showSpectatePopup, setShowSpectatePopup] = useState(false);
   const handleSpectateClick = () => {
     if (!username) {
-      setPendingSpectate(true);
+      setShowSpectatePopup(true);
+      setPendingSpectate(false);
     } else {
       handleShowSpectatorList();
     }
-  };
+  } 
 
   if (showSpectatorList) {
     return (
@@ -481,6 +481,12 @@ function App() {
             }
           }}
           onSpectate={handleSpectateClick}
+        />
+        <TimedPopup
+          open={showSpectatePopup}
+          onClose={() => setShowSpectatePopup(false)}
+          message={"Please enter a username before spectating live games."}
+          duration={3000}
         />
         <Container maxWidth="md">
           <Leaderboard refreshTrigger={leaderboardRefresh} />
