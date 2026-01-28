@@ -8,7 +8,16 @@ export default function UsernameInput({ onSubmit, onSpectate }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (username.trim()) {
-      onSubmit(username.trim());
+      onSubmit(username.trim(), false);
+    }
+  };
+
+  const handleSpectate = (e) => {
+    e.preventDefault();
+    if (username.trim()) {
+      onSubmit(username.trim(), true);
+    } else {
+      onSpectate();
     }
   };
 
@@ -85,7 +94,7 @@ export default function UsernameInput({ onSubmit, onSpectate }) {
           variant="outlined"
           size="large"
           startIcon={<VisibilityIcon />}
-          onClick={onSpectate}
+          onClick={handleSpectate}
         >
           Spectate Live Games
         </Button>
