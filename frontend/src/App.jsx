@@ -53,6 +53,14 @@ function App() {
   const getInitialGameId = () => localStorage.getItem('gameId') || null;
   const getInitialGameStatus = () => localStorage.getItem('gameStatus') || 'waiting';
 
+  // Track if resume is available
+  const [resumeAvailable, setResumeAvailable] = useState(() => {
+    const username = localStorage.getItem('username');
+    const gameId = localStorage.getItem('gameId');
+    const gameStatus = localStorage.getItem('gameStatus');
+    return !!(username && gameId && gameStatus !== 'completed' && gameStatus !== 'forfeited');
+  });
+
   const [gameStage, setGameStage] = useState('username'); // username, waiting, playing, finished
   const [username, setUsername] = useState(getInitialUsername());
   const [gameState, setGameState] = useState({
@@ -320,6 +328,39 @@ function App() {
       socketService.on('spectator-chat-received', (message) => {
         setChatMessages(prev => [...prev, message]);
       });
+
+      socketService.on('game-reconnected', (data) => {
+        console.log('Game reconnected:', data);
+        setGameState(prev => ({
+          ...prev,
+          gameId: data.gameId,
+          board: data.board,
+          currentTurn: data.currentTurn,
+          status: 'active',
+          winner: null,
+          lastMove: null
+        }));
+        setOpponent(data.opponent);
+        setPlayerNumber(data.playerNumber);
+        setYourColor(data.yourColor);
+        setOpponentColor(data.opponentColor);
+        setIsBot(data.isBot || false);
+        localStorage.setItem('gameId', data.gameId);
+        localStorage.setItem('gameStatus', 'active');
+        setGameStage('playing');
+        setError('');
+        setResumeAvailable(false);
+      });
+
+      socketService.on('opponent-disconnected-temp', (data) => {
+        console.log('Opponent temporarily disconnected:', data);
+        setError(data.message);
+      });
+
+      socketService.on('opponent-reconnected', (data) => {
+        console.log('Opponent reconnected:', data);
+        setError('');
+      });
     }
     // Cleanup on unmount
     return () => {
@@ -334,31 +375,17 @@ function App() {
     const storedUsername = localStorage.getItem('username');
     const storedGameId = localStorage.getItem('gameId');
     const storedGameStatus = localStorage.getItem('gameStatus');
+    
     if (
       storedUsername &&
       storedGameId &&
       storedGameStatus !== 'completed' &&
       storedGameStatus !== 'forfeited'
     ) {
-      socketService.emit('reconnect-game', { gameId: storedGameId, username: storedUsername });
-      socketService.on('game-reconnected', (data) => {
-        setGameState(prev => ({
-          ...prev,
-          gameId: storedGameId,
-          board: data.board,
-          currentTurn: data.currentTurn,
-          status: 'active',
-          winner: null
-        }));
-        localStorage.setItem('gameStatus', 'active');
-        setGameStage('playing');
-        setError('');
-      });
-      socketService.on('error', (data) => {
-        setError(data.message);
-        setGameStage('username');
-        localStorage.removeItem('gameId');
-        localStorage.removeItem('gameStatus');
+      console.log('Attempting to reconnect to game:', storedGameId);
+      socketService.emit('reconnect-game', { 
+        gameId: storedGameId, 
+        username: storedUsername 
       });
     }
   }, []);
@@ -552,6 +579,25 @@ function App() {
           }}
           onSpectate={handleSpectateClick}
         />
+        {resumeAvailable && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => {
+                // Resume previous game
+                const storedUsername = localStorage.getItem('username');
+                const storedGameId = localStorage.getItem('gameId');
+                if (storedUsername && storedGameId) {
+                  socketService.emit('reconnect-game', { gameId: storedGameId, username: storedUsername });
+                  // The socket event will handle updating state on success
+                }
+              }}
+            >
+              Resume Game
+            </Button>
+          </Box>
+        )}
         <TimedPopup
           open={showSpectatePopup}
           onClose={() => setShowSpectatePopup(false)}
