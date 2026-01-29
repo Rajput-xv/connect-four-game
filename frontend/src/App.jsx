@@ -53,6 +53,14 @@ function App() {
   const getInitialGameId = () => localStorage.getItem('gameId') || null;
   const getInitialGameStatus = () => localStorage.getItem('gameStatus') || 'waiting';
 
+  // Track if resume is available
+  const [resumeAvailable, setResumeAvailable] = useState(() => {
+    const username = localStorage.getItem('username');
+    const gameId = localStorage.getItem('gameId');
+    const gameStatus = localStorage.getItem('gameStatus');
+    return !!(username && gameId && gameStatus !== 'completed' && gameStatus !== 'forfeited');
+  });
+
   const [gameStage, setGameStage] = useState('username'); // username, waiting, playing, finished
   const [username, setUsername] = useState(getInitialUsername());
   const [gameState, setGameState] = useState({
@@ -552,6 +560,25 @@ function App() {
           }}
           onSpectate={handleSpectateClick}
         />
+        {resumeAvailable && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => {
+                // Resume previous game
+                const storedUsername = localStorage.getItem('username');
+                const storedGameId = localStorage.getItem('gameId');
+                if (storedUsername && storedGameId) {
+                  socketService.emit('reconnect-game', { gameId: storedGameId, username: storedUsername });
+                  // The socket event will handle updating state on success
+                }
+              }}
+            >
+              Resume Game
+            </Button>
+          </Box>
+        )}
         <TimedPopup
           open={showSpectatePopup}
           onClose={() => setShowSpectatePopup(false)}
