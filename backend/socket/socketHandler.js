@@ -152,8 +152,7 @@ function setupSocketHandlers(io) {
     });
 
     socket.on('reconnect-game', async ({ gameId, username }) => {
-      const game = GameService.handleReconnect(socket.id, gameId);
-      
+      const game = GameService.handleReconnect(socket.id, gameId, username);
       if (game) {
         socket.emit('game-reconnected', {
           board: game.board,
@@ -343,24 +342,31 @@ function setupSocketHandlers(io) {
 
     socket.on('disconnect', () => {
       console.log('Client disconnected:', socket.id);
-      
       MatchmakingService.removePlayer(socket.id);
-      
       const disconnectInfo = GameService.handleDisconnect(socket.id);
-      
       if (disconnectInfo) {
         const { gameId, game } = disconnectInfo;
-        
         setTimeout(async () => {
-          // Check if player reconnected
-          const disconnectData = GameService.disconnectedPlayers?.get?.(socket.id);
-          if (disconnectData) {
+          // Check if player reconnected (by username)
+          let stillDisconnected = false;
+          let username = null;
+          for (const [sid, info] of GameService.disconnectedPlayers.entries()) {
+            if (info.gameId === gameId) {
+              stillDisconnected = true;
+              username = info.username;
+              break;
+            }
+          }
+          if (stillDisconnected) {
             // Player didn't reconnect - forfeit game
-            await GameService.forfeitGame(gameId, socket.id);
-            
-            const opponent = game.player1.socketId === socket.id ? 
-              game.player2.socketId : game.player1.socketId;
-            
+            // Find socketId by username
+            let forfeitingSocketId = null;
+            if (game.player1.username === username) forfeitingSocketId = game.player1.socketId;
+            if (game.player2.username === username) forfeitingSocketId = game.player2.socketId;
+            await GameService.forfeitGame(gameId, forfeitingSocketId);
+            const opponent = (game.player1.username === username)
+              ? game.player2.socketId
+              : game.player1.socketId;
             if (opponent) {
               io.to(opponent).emit('opponent-disconnected', {
                 message: 'Opponent disconnected. You win!'

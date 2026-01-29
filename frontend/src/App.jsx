@@ -48,13 +48,18 @@ function getWinningCells(board, lastMove, winner) {
 }
 
 function App() {
+  // Load from localStorage if available
+  const getInitialUsername = () => localStorage.getItem('username') || '';
+  const getInitialGameId = () => localStorage.getItem('gameId') || null;
+  const getInitialGameStatus = () => localStorage.getItem('gameStatus') || 'waiting';
+
   const [gameStage, setGameStage] = useState('username'); // username, waiting, playing, finished
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState(getInitialUsername());
   const [gameState, setGameState] = useState({
-    gameId: null,
+    gameId: getInitialGameId(),
     board: Array(6).fill(null).map(() => Array(7).fill(0)),
     currentTurn: 1,
-    status: 'waiting',
+    status: getInitialGameStatus(),
     winner: null,
     lastMove: null
   });
@@ -167,6 +172,8 @@ function App() {
           status: 'active',
           currentTurn: 1
         }));
+        localStorage.setItem('gameId', data.gameId);
+        localStorage.setItem('gameStatus', 'active');
         setOpponent(data.opponent);
         setPlayerNumber(data.playerNumber);
         setYourColor(data.yourColor);
@@ -184,56 +191,48 @@ function App() {
           currentTurn: data.currentTurn,
           lastMove: data.lastMove
         }));
-        // Unlock board if it was locked for bot
         setBoardLocked(false);
       });
 
       socketService.on('game-over', (data) => {
-        // console.log('Game over:', data);
         setGameState(prev => ({
           ...prev,
           board: data.board,
           status: 'completed',
           winner: data.winner
         }));
+        localStorage.setItem('gameStatus', 'completed');
         setGameStage('finished');
         setLeaderboardRefresh(prev => prev + 1);
       });
 
       socketService.on('opponent-disconnected', (data) => {
-        // console.log('Opponent disconnected:', data);
         setError(data.message);
         setGameState(prev => ({
           ...prev,
           status: 'completed'
         }));
+        localStorage.setItem('gameStatus', 'completed');
         setGameStage('finished');
       });
 
       socketService.on('error', (data) => {
-        console.error('Game error:', data);
         setError(data.message);
       });
 
       socketService.on('rematch-requested', (data) => {
-        // console.log('Rematch requested from:', data.from);
         setRematchReceived(true);
         setRematchFrom(data.from);
       });
 
       socketService.on('rematch-request-sent', () => {
-        // console.log('Rematch request sent');
         setRematchRequested(true);
       });
 
       socketService.on('rematch-accepted', (data) => {
-        // console.log('Rematch accepted:', data);
-        // Reset all states
         setRematchRequested(false);
         setRematchReceived(false);
         setRematchFrom('');
-        
-        // Start new game
         setGameState({
           gameId: data.gameId,
           board: Array(6).fill(null).map(() => Array(7).fill(0)),
@@ -242,6 +241,8 @@ function App() {
           winner: null,
           lastMove: null
         });
+        localStorage.setItem('gameId', data.gameId);
+        localStorage.setItem('gameStatus', 'active');
         setOpponent(data.opponent);
         setPlayerNumber(data.playerNumber);
         setYourColor(data.yourColor);
@@ -251,7 +252,6 @@ function App() {
       });
 
       socketService.on('rematch-declined', () => {
-        // console.log('Rematch declined');
         setRematchRequested(false);
         setRematchReceived(false);
         setError('Opponent declined rematch');
@@ -261,7 +261,6 @@ function App() {
       });
 
       socketService.on('rematch-timeout', () => {
-        // console.log('Rematch timeout');
         setRematchRequested(false);
         setRematchReceived(false);
         setError('Rematch request timed out');
@@ -271,13 +270,11 @@ function App() {
       });
 
       socketService.on('active-games-list', (data) => {
-        // console.log('Active games:', data.games);
         setActiveGames(data.games);
         setGamesLoading(false);
       });
 
       socketService.on('spectate-started', (data) => {
-        // console.log('Spectate started:', data);
         setSpectatorGameState({
           board: data.board,
           currentTurn: data.currentTurn,
@@ -297,7 +294,6 @@ function App() {
       });
 
       socketService.on('spectate-move-made', (data) => {
-        // console.log('Spectate move:', data);
         setSpectatorGameState(prev => ({
           ...prev,
           board: data.board,
@@ -307,7 +303,6 @@ function App() {
       });
 
       socketService.on('spectate-game-over', (data) => {
-        // console.log('Spectate game over:', data);
         setSpectatorGameState(prev => ({
           ...prev,
           board: data.board,
@@ -317,34 +312,56 @@ function App() {
       });
 
       socketService.on('spectator-joined', (data) => {
-        // console.log('Spectator joined:', data);
         setSpectatorCount(data.spectatorCount);
       });
 
       socketService.on('spectator-left', (data) => {
-        // console.log('Spectator left:', data);
         setSpectatorCount(data.spectatorCount);
       });
 
       socketService.on('spectator-chat-received', (message) => {
-        // console.log('Chat message received:', message);
         setChatMessages(prev => [...prev, message]);
+      });
+    }
+
+    // Try to auto-reconnect if username and gameId exist and game is not finished
+    if (username && gameState.gameId && gameState.status !== 'completed' && gameState.status !== 'forfeited') {
+      socketService.emit('reconnect-game', { gameId: gameState.gameId, username });
+      socketService.on('game-reconnected', (data) => {
+        setGameState(prev => ({
+          ...prev,
+          board: data.board,
+          currentTurn: data.currentTurn,
+          status: 'active',
+          winner: null
+        }));
+        localStorage.setItem('gameStatus', 'active');
+        setGameStage('playing');
+        setError('');
+      });
+      socketService.on('error', (data) => {
+        setError(data.message);
+        setGameStage('username');
+        localStorage.removeItem('gameId');
+        localStorage.removeItem('gameStatus');
       });
     }
 
     // Cleanup on unmount
     return () => {
-      // Don't disconnect in development due to React StrictMode
-      // Only clean up handlers
       if (import.meta.env.PROD) {
         socketService.disconnect();
       }
     };
-  }, []);
+  }, [username, gameState.gameId, gameState.status]);
 
   const handleUsernameSubmit = (name) => {
     setUsername(name);
     setError('');
+    localStorage.setItem('username', name);
+    // Clear any previous gameId on new match
+    localStorage.removeItem('gameId');
+    localStorage.removeItem('gameStatus');
     socketService.emit('find-match', { username: name });
     setGameStage('waiting');
   };
@@ -416,6 +433,8 @@ function App() {
     setRematchRequested(false);
     setRematchReceived(false);
     setRematchFrom('');
+    localStorage.removeItem('gameId');
+    localStorage.removeItem('gameStatus');
   };
 
   const handleShowSpectatorList = () => {
