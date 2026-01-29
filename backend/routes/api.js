@@ -9,7 +9,7 @@ router.get('/leaderboard', async (req, res) => {
   try {
     const players = await Player.find()
       .sort({ gamesWon: -1 })
-      .limit(10)
+      // .limit(10)
       .select('username gamesWon gamesLost gamesDrawn totalGames');
     
     res.json(players);

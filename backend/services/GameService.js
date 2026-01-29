@@ -75,7 +75,7 @@ class GameService {
   getAllActiveGames() {
     const games = [];
     this.activeGames.forEach((game, gameId) => {
-      if (game.status === 'active' && !game.player2.isBot) {
+      if (game.status === 'active') {
         games.push({
           gameId,
           player1: game.player1.username,
