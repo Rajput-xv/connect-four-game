@@ -216,7 +216,8 @@ function App() {
         setError(data.message);
         setGameState(prev => ({
           ...prev,
-          status: 'completed'
+          status: 'completed',
+          winner: data.winner || prev.winner
         }));
         localStorage.setItem('gameStatus', 'completed');
         setGameStage('finished');
