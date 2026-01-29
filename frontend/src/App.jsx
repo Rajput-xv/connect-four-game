@@ -670,8 +670,9 @@ function App() {
                           setRematchRequested(false);
                           setRematchReceived(false);
                           setRematchFrom('');
-                          socketService.emit('find-match', { username });
-                          setGameStage('waiting');
+                          // Immediately start a new bot game
+                          socketService.emit('start-bot-game', { username });
+                          setGameStage('playing');
                         }}
                       >
                         Play Again
