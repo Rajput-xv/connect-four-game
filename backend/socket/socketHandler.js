@@ -453,12 +453,21 @@ function setupSocketHandlers(io) {
           // Player didn't reconnect - forfeit game
           console.log(`${disconnectedUsername} did not reconnect. Forfeiting game ${gameId}.`);
           
+          // Forfeit and get winner
           await GameService.forfeitGame(gameId, socket.id);
-          
+          const game = GameService.getGame(gameId);
+          let winner = null;
+          if (game) {
+            winner = game.winner;
+          } else {
+            // fallback: determine winner from socketId
+            winner = (game && game.player1.socketId === socket.id) ? game.player2.username : game?.player1?.username;
+          }
           // Notify opponent they won
           if (opponentSocketId) {
             io.to(opponentSocketId).emit('opponent-disconnected', {
-              message: `${disconnectedUsername} disconnected. You win!`
+              message: `${disconnectedUsername} disconnected. You win!`,
+              winner
             });
           }
 
