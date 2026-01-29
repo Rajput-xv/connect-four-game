@@ -215,19 +215,48 @@ class GameService {
     const game = this.activeGames.get(gameId);
     if (!game || game.status !== 'active') return null;
 
-    // Set 30 second timer for reconnection
+    // Store both socketId and username for reconnection
+    const username = (game.player1.socketId === socketId)
+      ? game.player1.username
+      : game.player2.username;
+
     this.disconnectedPlayers.set(socketId, {
       gameId,
+      username,
       timestamp: Date.now()
     });
 
     return { gameId, game };
   }
 
-  handleReconnect(socketId, gameId) {
-    this.disconnectedPlayers.delete(socketId);
-    const game = this.activeGames.get(gameId);
-    return game;
+  // Allow reconnection by username within 30s
+  handleReconnect(socketId, gameId, username) {
+    // Find the disconnected player by username
+    let foundKey = null;
+    for (const [sid, info] of this.disconnectedPlayers.entries()) {
+      if (info.gameId === gameId && info.username === username) {
+        foundKey = sid;
+        break;
+      }
+    }
+    if (foundKey) {
+      this.disconnectedPlayers.delete(foundKey);
+      // Update player socketId in game
+      const game = this.activeGames.get(gameId);
+      if (game) {
+        if (game.player1.username === username) {
+          this.playerGameMap.delete(game.player1.socketId);
+          game.player1.socketId = socketId;
+          this.playerGameMap.set(socketId, gameId);
+        } else if (game.player2.username === username) {
+          this.playerGameMap.delete(game.player2.socketId);
+          game.player2.socketId = socketId;
+          this.playerGameMap.set(socketId, gameId);
+        }
+        return game;
+      }
+    }
+    return null;
   }
 }
 
