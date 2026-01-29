@@ -52,8 +52,15 @@ export default function Leaderboard({ refreshTrigger }) {
       >
         Leaderboard
       </Typography>
-      <TableContainer sx={{ maxWidth: '100vw', overflowX: 'auto' }}>
-        <Table size="small" sx={{ minWidth: 400 }}>
+      <TableContainer 
+        sx={{ 
+          maxWidth: '100vw', 
+          overflowX: 'auto', 
+          maxHeight: 350,
+          overflowY: 'auto',
+        }}
+      >
+        <Table size="small" sx={{ minWidth: 400 }} stickyHeader>
           <TableHead>
             <TableRow>
               <TableCell><strong>Rank</strong></TableCell>
