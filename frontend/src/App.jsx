@@ -152,11 +152,9 @@ function App() {
   // Use ref to track if socket handlers are set up
   const handlersSetup = useRef(false);
 
+  // Main socket event handlers (no reconnect logic here)
   useEffect(() => {
-    // Connect to socket only once
     socketService.connect();
-
-    // Setup event handlers only once
     if (!handlersSetup.current) {
       handlersSetup.current = true;
 
@@ -323,13 +321,30 @@ function App() {
         setChatMessages(prev => [...prev, message]);
       });
     }
+    // Cleanup on unmount
+    return () => {
+      if (import.meta.env.PROD) {
+        socketService.disconnect();
+      }
+    };
+  }, []);
 
-    // Try to auto-reconnect if username and gameId exist and game is not finished
-    if (username && gameState.gameId && gameState.status !== 'completed' && gameState.status !== 'forfeited') {
-      socketService.emit('reconnect-game', { gameId: gameState.gameId, username });
+  // Auto-reconnect logic: only run on initial mount
+  useEffect(() => {
+    const storedUsername = localStorage.getItem('username');
+    const storedGameId = localStorage.getItem('gameId');
+    const storedGameStatus = localStorage.getItem('gameStatus');
+    if (
+      storedUsername &&
+      storedGameId &&
+      storedGameStatus !== 'completed' &&
+      storedGameStatus !== 'forfeited'
+    ) {
+      socketService.emit('reconnect-game', { gameId: storedGameId, username: storedUsername });
       socketService.on('game-reconnected', (data) => {
         setGameState(prev => ({
           ...prev,
+          gameId: storedGameId,
           board: data.board,
           currentTurn: data.currentTurn,
           status: 'active',
@@ -346,14 +361,7 @@ function App() {
         localStorage.removeItem('gameStatus');
       });
     }
-
-    // Cleanup on unmount
-    return () => {
-      if (import.meta.env.PROD) {
-        socketService.disconnect();
-      }
-    };
-  }, [username, gameState.gameId, gameState.status]);
+  }, []);
 
   const handleUsernameSubmit = (name) => {
     setUsername(name);
@@ -662,8 +670,9 @@ function App() {
                           setRematchRequested(false);
                           setRematchReceived(false);
                           setRematchFrom('');
-                          socketService.emit('find-match', { username });
-                          setGameStage('waiting');
+                          // Immediately start a new bot game
+                          socketService.emit('start-bot-game', { username });
+                          setGameStage('playing');
                         }}
                       >
                         Play Again
