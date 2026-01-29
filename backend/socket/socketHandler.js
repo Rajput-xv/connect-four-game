@@ -5,26 +5,25 @@ const { PLAYER_TWO, RECONNECT_TIMEOUT } = require('../utils/constants');
 const { v4: uuidv4 } = require('uuid');
 
 function setupSocketHandlers(io) {
-  // Instantly start a new game with the bot (no matchmaking wait)
-  socket.on('start-bot-game', async ({ username }) => {
-    const gameId = uuidv4();
-    const game = await GameService.createGame(
-      gameId,
-      { socketId: socket.id, username, color: 'red' },
-      { socketId: 'bot', username: 'Bot', color: 'yellow', isBot: true }
-    );
-
-    socket.emit('match-found', {
-      gameId: game.gameId,
-      opponent: 'Bot',
-      playerNumber: 1,
-      yourColor: game.player1.color,
-      opponentColor: game.player2.color,
-      isBot: true
-    });
-  });
-
   io.on('connection', (socket) => {
+    // Instantly start a new game with the bot (no matchmaking wait)
+    socket.on('start-bot-game', async ({ username }) => {
+      const gameId = uuidv4();
+      const game = await GameService.createGame(
+        gameId,
+        { socketId: socket.id, username, color: 'red' },
+        { socketId: 'bot', username: 'Bot', color: 'yellow', isBot: true }
+      );
+
+      socket.emit('match-found', {
+        gameId: game.gameId,
+        opponent: 'Bot',
+        playerNumber: 1,
+        yourColor: game.player1.color,
+        opponentColor: game.player2.color,
+        isBot: true
+      });
+    });
     console.log('Client connected:', socket.id);
 
     socket.on('find-match', async ({ username }) => {
