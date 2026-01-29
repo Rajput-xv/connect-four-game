@@ -24,6 +24,7 @@ function setupSocketHandlers(io) {
         isBot: true
       });
     });
+
     console.log('Client connected:', socket.id);
 
     socket.on('find-match', async ({ username }) => {
@@ -130,20 +131,7 @@ function setupSocketHandlers(io) {
           io.to(game.player2.socketId).emit('game-over', gameOverData);
         }
 
-        // ← ADD THIS: Notify spectators game ended
         io.to(`game-${gameId}`).emit('spectate-game-over', gameOverData);
-      }
-
-      if (result.status === 'completed') {
-        const gameOverData = {
-          winner: result.winner,
-          board: result.board
-        };
-
-        io.to(game.player1.socketId).emit('game-over', gameOverData);
-        if (!game.player2.isBot) {
-          io.to(game.player2.socketId).emit('game-over', gameOverData);
-        }
       } else if (game.player2.isBot && result.currentTurn === PLAYER_TWO) {
         // Bot's turn
         setTimeout(async () => {
@@ -170,17 +158,72 @@ function setupSocketHandlers(io) {
     });
 
     socket.on('reconnect-game', async ({ gameId, username }) => {
-      const game = GameService.handleReconnect(socket.id, gameId, username);
-      if (game) {
-        socket.emit('game-reconnected', {
-          board: game.board,
-          currentTurn: game.currentTurn,
-          player1: game.player1.username,
-          player2: game.player2.username
-        });
-      } else {
-        socket.emit('error', { message: 'Could not reconnect to game' });
+      const game = GameService.getGame(gameId);
+      
+      if (!game) {
+        socket.emit('error', { message: 'Game not found' });
+        return;
       }
+
+      // Check if game is still active
+      if (game.status !== 'active') {
+        socket.emit('error', { message: 'Game has already ended' });
+        return;
+      }
+
+      // Determine which player is reconnecting
+      let playerNumber = null;
+      let opponent = null;
+      let yourColor = '';
+      let opponentColor = '';
+
+      if (game.player1.username === username) {
+        playerNumber = 1;
+        opponent = game.player2.username;
+        yourColor = game.player1.color;
+        opponentColor = game.player2.color;
+        // Update player1's socketId
+        game.player1.socketId = socket.id;
+        GameService.playerGameMap.set(socket.id, gameId);
+      } else if (game.player2.username === username) {
+        playerNumber = 2;
+        opponent = game.player1.username;
+        yourColor = game.player2.color;
+        opponentColor = game.player1.color;
+        // Update player2's socketId
+        game.player2.socketId = socket.id;
+        GameService.playerGameMap.set(socket.id, gameId);
+      } else {
+        socket.emit('error', { message: 'You are not part of this game' });
+        return;
+      }
+
+      // Remove from disconnected players
+      GameService.disconnectedPlayers.delete(socket.id);
+
+      // Send reconnection success with full game state
+      socket.emit('game-reconnected', {
+        board: game.board,
+        currentTurn: game.currentTurn,
+        player1: game.player1.username,
+        player2: game.player2.username,
+        gameId: game.gameId,
+        playerNumber: playerNumber,
+        yourColor: yourColor,
+        opponentColor: opponentColor,
+        opponent: opponent,
+        isBot: game.player2.isBot
+      });
+
+      // Notify opponent that player has reconnected
+      const opponentSocketId = playerNumber === 1 ? game.player2.socketId : game.player1.socketId;
+      if (opponentSocketId && opponentSocketId !== 'bot') {
+        io.to(opponentSocketId).emit('opponent-reconnected', {
+          message: `${username} has reconnected`
+        });
+      }
+
+      console.log(`${username} reconnected to game ${gameId}`);
     });
 
     socket.on('request-rematch', async ({ gameId }) => {
@@ -335,7 +378,7 @@ function setupSocketHandlers(io) {
     socket.on('spectator-chat-message', ({ gameId, username, message }) => {
       // Validate message
       if (!message || message.trim().length === 0) return;
-      if (message.length > 200) return; // Limit message length
+      if (message.length > 200) return;
 
       const game = GameService.getGame(gameId);
       if (!game) return;
@@ -344,7 +387,7 @@ function setupSocketHandlers(io) {
       const isSpectator = game.spectators?.some(s => s.socketId === socket.id);
       if (!isSpectator) return;
 
-      // Broadcast message to all spectators (but not players)
+      // Broadcast message to all spectators
       const chatMessage = {
         username,
         message: message.trim(),
@@ -352,7 +395,6 @@ function setupSocketHandlers(io) {
         messageId: `${socket.id}-${Date.now()}`
       };
 
-      // Send to all spectators in this game room
       io.to(`game-${gameId}`).emit('spectator-chat-received', chatMessage);
       
       console.log(`Chat in ${gameId} from ${username}: ${message}`);
@@ -360,39 +402,70 @@ function setupSocketHandlers(io) {
 
     socket.on('disconnect', () => {
       console.log('Client disconnected:', socket.id);
+      
       MatchmakingService.removePlayer(socket.id);
-      const disconnectInfo = GameService.handleDisconnect(socket.id);
-      if (disconnectInfo) {
-        const { gameId, game } = disconnectInfo;
-        setTimeout(async () => {
-          // Check if player reconnected (by username)
-          let stillDisconnected = false;
-          let username = null;
-          for (const [sid, info] of GameService.disconnectedPlayers.entries()) {
-            if (info.gameId === gameId) {
-              stillDisconnected = true;
-              username = info.username;
-              break;
-            }
-          }
-          if (stillDisconnected) {
-            // Player didn't reconnect - forfeit game
-            // Find socketId by username
-            let forfeitingSocketId = null;
-            if (game.player1.username === username) forfeitingSocketId = game.player1.socketId;
-            if (game.player2.username === username) forfeitingSocketId = game.player2.socketId;
-            await GameService.forfeitGame(gameId, forfeitingSocketId);
-            const opponent = (game.player1.username === username)
-              ? game.player2.socketId
-              : game.player1.socketId;
-            if (opponent) {
-              io.to(opponent).emit('opponent-disconnected', {
-                message: 'Opponent disconnected. You win!'
-              });
-            }
-          }
-        }, RECONNECT_TIMEOUT);
+      
+      const gameId = GameService.playerGameMap.get(socket.id);
+      if (!gameId) return;
+
+      const game = GameService.getGame(gameId);
+      if (!game || game.status !== 'active') return;
+
+      // Don't handle disconnect for bot games
+      if (game.player2.isBot) return;
+
+      // Determine which player disconnected
+      let disconnectedUsername = '';
+      let opponentSocketId = null;
+
+      if (game.player1.socketId === socket.id) {
+        disconnectedUsername = game.player1.username;
+        opponentSocketId = game.player2.socketId;
+      } else if (game.player2.socketId === socket.id) {
+        disconnectedUsername = game.player2.username;
+        opponentSocketId = game.player1.socketId;
       }
+
+      if (!disconnectedUsername) return;
+
+      // Store disconnection info
+      GameService.disconnectedPlayers.set(socket.id, {
+        gameId,
+        username: disconnectedUsername,
+        timestamp: Date.now()
+      });
+
+      console.log(`${disconnectedUsername} disconnected from game ${gameId}. 30s to reconnect.`);
+
+      // Notify opponent
+      if (opponentSocketId) {
+        io.to(opponentSocketId).emit('opponent-disconnected-temp', {
+          message: `${disconnectedUsername} disconnected. Waiting 30s for reconnection...`
+        });
+      }
+
+      // Set 30-second timer
+      setTimeout(async () => {
+        // Check if player reconnected
+        const stillDisconnected = GameService.disconnectedPlayers.has(socket.id);
+        
+        if (stillDisconnected) {
+          // Player didn't reconnect - forfeit game
+          console.log(`${disconnectedUsername} did not reconnect. Forfeiting game ${gameId}.`);
+          
+          await GameService.forfeitGame(gameId, socket.id);
+          
+          // Notify opponent they won
+          if (opponentSocketId) {
+            io.to(opponentSocketId).emit('opponent-disconnected', {
+              message: `${disconnectedUsername} disconnected. You win!`
+            });
+          }
+
+          // Clean up
+          GameService.disconnectedPlayers.delete(socket.id);
+        }
+      }, RECONNECT_TIMEOUT);
     });
   });
 }
