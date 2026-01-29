@@ -58,6 +58,8 @@ function App() {
     winner: null,
     lastMove: null
   });
+  // Board lock to prevent double moves before bot responds
+  const [boardLocked, setBoardLocked] = useState(false);
   // Add responsive style for mobile margin-bottom
   const responsiveStyle = `
   @media (max-width: 600px) {
@@ -154,13 +156,11 @@ function App() {
       handlersSetup.current = true;
 
       socketService.on('waiting-for-opponent', () => {
-        // console.log('Waiting for opponent...');
         setGameStage('waiting');
         setError('');
       });
 
       socketService.on('match-found', (data) => {
-        // console.log('Match found:', data);
         setGameState(prev => ({
           ...prev,
           gameId: data.gameId,
@@ -174,16 +174,18 @@ function App() {
         setIsBot(data.isBot || false);
         setGameStage('playing');
         setError('');
+        setBoardLocked(false);
       });
 
       socketService.on('move-made', (data) => {
-        // console.log('Move made:', data);
         setGameState(prev => ({
           ...prev,
           board: data.board,
           currentTurn: data.currentTurn,
           lastMove: data.lastMove
         }));
+        // Unlock board if it was locked for bot
+        setBoardLocked(false);
       });
 
       socketService.on('game-over', (data) => {
@@ -348,6 +350,9 @@ function App() {
   };
 
   const handleColumnClick = (column) => {
+    // Prevent move if board is locked (waiting for bot)
+    if (boardLocked) return;
+
     // Check if it's the player's turn
     if (gameState.currentTurn !== playerNumber) {
       setError("It's not your turn!");
@@ -362,7 +367,9 @@ function App() {
       return;
     }
 
-    // console.log('Making move:', { gameId: gameState.gameId, column });
+    // Lock board if playing bot (prevents double move before bot responds)
+    if (isBot) setBoardLocked(true);
+
     socketService.emit('make-move', {
       gameId: gameState.gameId,
       column
@@ -570,7 +577,7 @@ function App() {
             <GameBoard
               board={gameState.board}
               onColumnClick={handleColumnClick}
-              disabled={gameState.currentTurn !== playerNumber || gameState.status !== 'active'}
+              disabled={boardLocked || gameState.currentTurn !== playerNumber || gameState.status !== 'active'}
               lastMove={gameState.lastMove}
               winningCells={getWinningCells(gameState.board, gameState.lastMove, gameState.winner)}
               playerColors={{
