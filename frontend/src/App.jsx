@@ -680,7 +680,30 @@ function App() {
                       <Button
                         variant="outlined"
                         size="large"
-                        onClick={handleReturnHome}
+                        onClick={() => {
+                          // Start matchmaking immediately, show waiting screen
+                          setGameState({
+                            gameId: null,
+                            board: Array(6).fill(null).map(() => Array(7).fill(0)),
+                            currentTurn: 1,
+                            status: 'waiting',
+                            winner: null,
+                            lastMove: null
+                          });
+                          setOpponent('');
+                          setPlayerNumber(null);
+                          setYourColor('');
+                          setOpponentColor('');
+                          setError('');
+                          setIsBot(false);
+                          setRematchRequested(false);
+                          setRematchReceived(false);
+                          setRematchFrom('');
+                          localStorage.removeItem('gameId');
+                          localStorage.removeItem('gameStatus');
+                          socketService.emit('find-match', { username });
+                          setGameStage('waiting');
+                        }}
                       >
                         Find New Opponent
                       </Button>
@@ -697,7 +720,30 @@ function App() {
                       <Button
                         variant="outlined"
                         size="large"
-                        onClick={handleReturnHome}
+                        onClick={() => {
+                          // Start matchmaking immediately, show waiting screen
+                          setGameState({
+                            gameId: null,
+                            board: Array(6).fill(null).map(() => Array(7).fill(0)),
+                            currentTurn: 1,
+                            status: 'waiting',
+                            winner: null,
+                            lastMove: null
+                          });
+                          setOpponent('');
+                          setPlayerNumber(null);
+                          setYourColor('');
+                          setOpponentColor('');
+                          setError('');
+                          setIsBot(false);
+                          setRematchRequested(false);
+                          setRematchReceived(false);
+                          setRematchFrom('');
+                          localStorage.removeItem('gameId');
+                          localStorage.removeItem('gameStatus');
+                          socketService.emit('find-match', { username });
+                          setGameStage('waiting');
+                        }}
                       >
                         Find New Opponent
                       </Button>
