@@ -796,6 +796,13 @@ function App() {
                       </Button>
                     </>
                   )}
+                  <Button
+                    variant="text"
+                    size="large"
+                    onClick={handleReturnHome}
+                  >
+                    Return Home
+                  </Button>
                 </Box>
               )}
             </Box>
