@@ -797,7 +797,7 @@ function App() {
                     </>
                   )}
                   <Button
-                    variant="text"
+                    variant="outlined"
                     size="large"
                     onClick={handleReturnHome}
                   >
