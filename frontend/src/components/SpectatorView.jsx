@@ -151,7 +151,7 @@ export default function SpectatorView({
 
         {isMobile ? (
           <Stack spacing={2}>
-            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <GameBoard
                 board={gameState.board}
                 onColumnClick={() => {}}
@@ -174,7 +174,7 @@ export default function SpectatorView({
         ) : (
           <Grid container spacing={2}>
             <Grid item xs={12} md={7}>
-              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <GameBoard
                   board={gameState.board}
                   onColumnClick={() => {}}

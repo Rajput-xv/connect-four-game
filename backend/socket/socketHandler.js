@@ -113,6 +113,7 @@ function setupSocketHandlers(io) {
         });
       }
 
+      // Always emit to spectators after every move
       io.to(`game-${gameId}`).emit('spectate-move-made', {
         board: result.board,
         currentTurn: result.currentTurn,
@@ -130,7 +131,7 @@ function setupSocketHandlers(io) {
         if (!game.player2.isBot) {
           io.to(game.player2.socketId).emit('game-over', gameOverData);
         }
-
+        // Always emit to spectators when game ends
         io.to(`game-${gameId}`).emit('spectate-game-over', gameOverData);
       } else if (game.player2.isBot && result.currentTurn === PLAYER_TWO) {
         // Bot's turn
@@ -145,9 +146,20 @@ function setupSocketHandlers(io) {
               lastMove: botResult.lastMove,
               player: PLAYER_TWO
             });
-
+            // Always emit to spectators after bot move
+            io.to(`game-${gameId}`).emit('spectate-move-made', {
+              board: botResult.board,
+              currentTurn: botResult.currentTurn,
+              lastMove: botResult.lastMove,
+              player: PLAYER_TWO
+            });
             if (botResult.status === 'completed') {
               io.to(game.player1.socketId).emit('game-over', {
+                winner: botResult.winner,
+                board: botResult.board
+              });
+              // Always emit to spectators when bot ends game
+              io.to(`game-${gameId}`).emit('spectate-game-over', {
                 winner: botResult.winner,
                 board: botResult.board
               });
@@ -361,6 +373,11 @@ function setupSocketHandlers(io) {
         spectatorCount: game.spectators.length,
         username
       });
+      // Notify both players about updated spectator count
+      io.to(game.player1.socketId).emit('spectator-count-updated', { spectatorCount: game.spectators.length });
+      if (game.player2.socketId && game.player2.socketId !== 'bot') {
+        io.to(game.player2.socketId).emit('spectator-count-updated', { spectatorCount: game.spectators.length });
+      }
     });
 
     socket.on('leave-spectate', ({ gameId }) => {
@@ -372,6 +389,11 @@ function setupSocketHandlers(io) {
         io.to(`game-${gameId}`).emit('spectator-left', {
           spectatorCount: (game.spectators || []).length
         });
+        // Notify both players about updated spectator count
+        io.to(game.player1.socketId).emit('spectator-count-updated', { spectatorCount: (game.spectators || []).length });
+        if (game.player2.socketId && game.player2.socketId !== 'bot') {
+          io.to(game.player2.socketId).emit('spectator-count-updated', { spectatorCount: (game.spectators || []).length });
+        }
       }
     });
 
