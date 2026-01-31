@@ -298,6 +298,7 @@ function App() {
         setSpectatorCount(data.spectatorCount);
         setSpectatorMode(true);
         setShowSpectatorList(false);
+        setChatMessages([]); // Reset chat for new spectate
       });
 
       socketService.on('spectate-move-made', (data) => {
@@ -316,6 +317,9 @@ function App() {
           status: 'completed',
           winner: data.winner
         }));
+        setTimeout(() => {
+          handleBackFromSpectator();
+        }, 2000);
       });
 
       socketService.on('spectator-joined', (data) => {
@@ -511,6 +515,20 @@ function App() {
     setSpectatorGameId(null);
     setShowSpectatorList(true);
     setChatMessages([]);
+    setSpectatorGameState({
+      board: Array(6).fill(null).map(() => Array(7).fill(0)),
+      currentTurn: 1,
+      status: 'active',
+      winner: null,
+      lastMove: null
+    });
+    setSpectatorPlayers({
+      player1: '',
+      player2: '',
+      player1Color: '',
+      player2Color: ''
+    });
+    setSpectatorCount(0);
     socketService.emit('get-active-games');
   };
 

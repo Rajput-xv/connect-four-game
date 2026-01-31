@@ -5,6 +5,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import GameBoard from './GameBoard';
 import SpectatorChat from './SpectatorChat';
 import Leaderboard from './Leaderboard';
+import React, { useEffect, useState } from 'react';
 
 export default function SpectatorView({
   gameState,
@@ -19,6 +20,18 @@ export default function SpectatorView({
   chatMessages,
   onSendChatMessage
 }) {
+  const [showGameOver, setShowGameOver] = useState(false);
+
+  useEffect(() => {
+    if (gameState.status === 'completed') {
+      setShowGameOver(true);
+      const timer = setTimeout(() => {
+        setShowGameOver(false);
+        onBack();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [gameState.status, onBack]);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const getCurrentPlayer = () => {
@@ -26,7 +39,7 @@ export default function SpectatorView({
   };
 
   return (
-    <Box sx={{ py: 4 }}>
+    <Box sx={{ py: 4, position: 'relative' }}>
       <Box sx={{ maxWidth: 1200, margin: '0 auto', px: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <Button
@@ -110,10 +123,34 @@ export default function SpectatorView({
               {gameState.winner === 'draw' ? "It's a draw!" : `${gameState.winner} wins! 🎉`}
             </Typography>
           )}
+
+          {showGameOver && (
+            <Box sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              bgcolor: 'rgba(0,0,0,0.6)',
+              zIndex: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Paper elevation={6} sx={{ p: 4, minWidth: 280, textAlign: 'center' }}>
+                <Typography variant="h4" color="error" gutterBottom>
+                  Game Over
+                </Typography>
+                <Typography variant="h6">
+                  Returning to home...
+                </Typography>
+              </Paper>
+            </Box>
+          )}
         </Paper>
 
         {isMobile ? (
-          <Stack spacing={3}>
+          <Stack spacing={2}>
             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
               <GameBoard
                 board={gameState.board}
@@ -135,7 +172,7 @@ export default function SpectatorView({
             <Leaderboard />
           </Stack>
         ) : (
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             <Grid item xs={12} md={7}>
               <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                 <GameBoard
@@ -157,10 +194,11 @@ export default function SpectatorView({
                 messages={chatMessages}
                 onSendMessage={onSendChatMessage}
               />
-              <Box sx={{ mt: 3 }}>
-                <Leaderboard />
-              </Box>
             </Grid>
+
+            <Box sx={{ mt: 3, width: '100%', display: 'flex', justifyContent: 'center'}}>
+              <Leaderboard />
+            </Box>
           </Grid>
         )}
       </Box>
