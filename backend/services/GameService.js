@@ -93,8 +93,9 @@ class GameService {
     const game = this.activeGames.get(gameId);
     if (!game) return { success: false, error: 'Game not found' };
 
+    // Prevent any further moves or DB updates if game is already completed or forfeited
     if (game.status !== 'active') {
-      return { success: false, error: 'Game is not active' };
+      return { success: false, error: 'Game is already over' };
     }
 
     if (game.currentTurn !== player) {
