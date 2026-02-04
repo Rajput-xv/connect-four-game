@@ -691,7 +691,10 @@ function App() {
                   variant="outlined"
                   color="primary"
                   size="large"
-                  onClick={handleReturnHome}
+                  onClick={() => {
+                    socketService.emit('cancel-matchmaking', { username });
+                    handleReturnHome();
+                  }}
                 >
                   Back to Menu
                 </Button>
