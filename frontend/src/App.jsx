@@ -486,6 +486,7 @@ function App() {
     setRematchReceived(false);
     setRematchFrom('');
     setShowBotDifficultySelect(false);
+    setCurrentBotDifficulty('hard');
     localStorage.removeItem('gameId');
     localStorage.removeItem('gameStatus');
   };
@@ -685,6 +686,14 @@ function App() {
                   }}
                 >
                   Hard
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  size="large"
+                  onClick={handleReturnHome}
+                >
+                  Back to Menu
                 </Button>
               </Box>
             </>
