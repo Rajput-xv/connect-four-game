@@ -1,5 +1,5 @@
 const GameLogic = require('../utils/gameLogic');
-const { ROWS, COLS, PLAYER_TWO, PLAYER_ONE } = require('../utils/constants');
+const { ROWS, COLS, PLAYER_TWO, PLAYER_ONE, EMPTY } = require('../utils/constants');
 
 class BotServiceEasy {
   static getBotMove(board) {
@@ -79,7 +79,7 @@ class BotServiceEasy {
     while (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
       if (board[r][c] === player) {
         count++;
-      } else if (board[r][c] === 0) {
+      } else if (board[r][c] === EMPTY) {
         openEnds++;
         break;
       } else {
@@ -95,7 +95,7 @@ class BotServiceEasy {
     while (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
       if (board[r][c] === player) {
         count++;
-      } else if (board[r][c] === 0) {
+      } else if (board[r][c] === EMPTY) {
         openEnds++;
         break;
       } else {
