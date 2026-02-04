@@ -31,7 +31,8 @@ class GameService {
         socketId: player2.socketId,
         username: player2.username,
         color: player2.color,
-        isBot: player2.isBot || false
+        isBot: player2.isBot || false,
+        botDifficulty: player2.botDifficulty || 'hard'
       },
       board: GameLogic.createEmptyBoard(),
       currentTurn: PLAYER_ONE,

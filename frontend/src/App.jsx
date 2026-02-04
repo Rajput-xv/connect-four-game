@@ -123,6 +123,9 @@ function App() {
   // Timer states
   const [waitingTimer, setWaitingTimer] = useState(10);
   const [rematchTimer, setRematchTimer] = useState(30);
+  // Bot difficulty selection state
+  const [showBotDifficultySelect, setShowBotDifficultySelect] = useState(false);
+  const [currentBotDifficulty, setCurrentBotDifficulty] = useState('hard');
     // Handle waiting for opponent timer
     useEffect(() => {
       if (gameStage === 'waiting') {
@@ -168,7 +171,12 @@ function App() {
 
       socketService.on('waiting-for-opponent', () => {
         setGameStage('waiting');
+        setShowBotDifficultySelect(false);
         setError('');
+      });
+
+      socketService.on('select-bot-difficulty', () => {
+        setShowBotDifficultySelect(true);
       });
 
       socketService.on('match-found', (data) => {
@@ -185,7 +193,11 @@ function App() {
         setYourColor(data.yourColor);
         setOpponentColor(data.opponentColor);
         setIsBot(data.isBot || false);
+        if (data.botDifficulty) {
+          setCurrentBotDifficulty(data.botDifficulty);
+        }
         setGameStage('playing');
+        setShowBotDifficultySelect(false);
         setError('');
         setBoardLocked(false);
       });
@@ -473,6 +485,7 @@ function App() {
     setRematchRequested(false);
     setRematchReceived(false);
     setRematchFrom('');
+    setShowBotDifficultySelect(false);
     localStorage.removeItem('gameId');
     localStorage.removeItem('gameStatus');
   };
@@ -644,12 +657,47 @@ function App() {
 
       {gameStage === 'waiting' && (
         <Box sx={{ textAlign: 'center', py: 8 }}>
-          <Typography variant="h5" gutterBottom>
-            Finding an opponent...
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            If no player joins in <b>{waitingTimer}s</b>, you'll play against a bot
-          </Typography>
+          {showBotDifficultySelect ? (
+            <>
+              <Typography variant="h5" gutterBottom>
+                No opponent found
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                Select bot difficulty:
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+                <Button
+                  variant="contained"
+                  color="success"
+                  size="large"
+                  onClick={() => {
+                    socketService.emit('start-bot-game', { username, difficulty: 'easy' });
+                  }}
+                >
+                  Easy
+                </Button>
+                <Button
+                  variant="contained"
+                  color="error"
+                  size="large"
+                  onClick={() => {
+                    socketService.emit('start-bot-game', { username, difficulty: 'hard' });
+                  }}
+                >
+                  Hard
+                </Button>
+              </Box>
+            </>
+          ) : (
+            <>
+              <Typography variant="h5" gutterBottom>
+                Finding an opponent...
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                If no player joins in <b>{waitingTimer}s</b>, you'll play against a bot
+              </Typography>
+            </>
+          )}
         </Box>
       )}
 
@@ -735,8 +783,8 @@ function App() {
                           setRematchRequested(false);
                           setRematchReceived(false);
                           setRematchFrom('');
-                          // Immediately start a new bot game
-                          socketService.emit('start-bot-game', { username });
+                          // Immediately start a new bot game with same difficulty
+                          socketService.emit('start-bot-game', { username, difficulty: currentBotDifficulty });
                           setGameStage('playing');
                         }}
                       >
